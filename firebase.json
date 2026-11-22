@@ -14,29 +14,29 @@
     ],
     "headers": [
       {
-        "source": "index.html",
+        "source": "assets/**",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
+            "value": "public, max-age=31536000, immutable"
           }
         ]
       },
       {
-        "source": "flutter_service_worker.js",
+        "source": "canvaskit/**",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
+            "value": "public, max-age=31536000, immutable"
           }
         ]
       },
       {
-        "source": "version.json",
+        "source": "icons/**",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
+            "value": "public, max-age=31536000, immutable"
           }
         ]
       }
