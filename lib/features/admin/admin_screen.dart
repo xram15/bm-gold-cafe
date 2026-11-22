@@ -490,7 +490,6 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                 : const Icon(Icons.save_outlined, size: 20, color: Colors.white),
           ),
         ),
-        ),
         PopupMenuButton<String>(
           tooltip: 'Compte administrateur',
           color: const Color(0xFF171717),
