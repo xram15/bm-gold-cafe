@@ -808,7 +808,7 @@ class VerticalBookPage extends StatelessWidget {
           imagePath: photo1,
           photoTitle: title1,
           goldBorder: goldBorder,
-          height: 80,
+          height: 108,
         ),
 
         // 3. Deuxième Produit
@@ -826,7 +826,7 @@ class VerticalBookPage extends StatelessWidget {
           imagePath: photo2,
           photoTitle: title2,
           goldBorder: goldBorder,
-          height: 80,
+          height: 108,
         ),
       ],
     );
@@ -853,45 +853,61 @@ class VerticalBookPage extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   color: textColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.9),
+                      offset: const Offset(0, 1),
+                      blurRadius: 3,
+                    ),
+                  ],
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
             Text(
               ' ......... ',
               style: TextStyle(
-                color: goldBorder.withValues(alpha: 0.45),
-                fontSize: 9.5,
+                color: goldBorder.withValues(alpha: 0.55),
+                fontSize: 11,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
             Text(
               prod.price,
               style: TextStyle(
                 fontFamily: 'Montserrat',
                 color: priceColor,
-                fontSize: 12.5,
-                fontWeight: FontWeight.bold,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withValues(alpha: 0.9),
+                    offset: const Offset(0, 1),
+                    blurRadius: 3,
+                  ),
+                ],
               ),
             ),
           ],
         ),
         if (prod.description != null && prod.description!.isNotEmpty) ...[
-          const SizedBox(height: 1),
+          const SizedBox(height: 3),
           Text(
             prod.description!,
             style: TextStyle(
               fontFamily: 'Montserrat',
               color: descColor,
-              fontSize: 9.5,
+              fontSize: 11,
               fontStyle: FontStyle.italic,
+              height: 1.25,
             ),
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ],
