@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1498,7 +1499,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                     ),
                     const SizedBox(height: 16),
 
-                    // Bouton unique pour importer depuis la galerie du téléphone
+                    // Bouton unique pour importer une photo
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF242430),
@@ -1515,7 +1516,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                             )
                           : const Icon(Icons.photo_library_rounded, size: 20),
                       label: Text(
-                        isPicking ? 'Chargement...' : 'Choisir une photo du téléphone',
+                        isPicking ? 'Chargement...' : 'Choisir une photo',
                         style: const TextStyle(
                           fontFamily: 'Montserrat',
                           fontWeight: FontWeight.bold,
@@ -1527,22 +1528,41 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                           : () async {
                               setModalState(() => isPicking = true);
                               try {
-                                final picker = ImagePicker();
-                                final XFile? file = await picker.pickImage(
-                                  source: ImageSource.gallery,
-                                  maxWidth: 1200,
-                                  maxHeight: 1200,
-                                  imageQuality: 85,
+                                // 1. Méthode universelle file_picker (100% fiable sur le Web hébergé et sur mobile)
+                                final files = await FilePicker.pickFiles(
+                                  type: FileType.image,
                                 );
-                                if (file != null) {
+
+                                if (files.isNotEmpty) {
+                                  final file = files.first;
                                   final bytes = await file.readAsBytes();
-                                  final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                  final ext = (file.extension ?? 'jpeg').toLowerCase();
+                                  final mime = (ext == 'png') ? 'image/png' : 'image/jpeg';
+                                  final base64String = 'data:$mime;base64,${base64Encode(bytes)}';
                                   setModalState(() {
                                     currentPath = base64String;
                                   });
+                                } else {
+                                  // 2. Fallback avec image_picker si l'utilisateur annule ou si besoin
+                                  try {
+                                    final picker = ImagePicker();
+                                    final XFile? imgFile = await picker.pickImage(
+                                      source: ImageSource.gallery,
+                                      maxWidth: 1200,
+                                      maxHeight: 1200,
+                                      imageQuality: 85,
+                                    );
+                                    if (imgFile != null) {
+                                      final bytes = await imgFile.readAsBytes();
+                                      final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                      setModalState(() {
+                                        currentPath = base64String;
+                                      });
+                                    }
+                                  } catch (_) {}
                                 }
                               } catch (e) {
-                                debugPrint('[ImagePicker] Erreur: $e');
+                                debugPrint('[FilePicker/ImagePicker] Erreur: $e');
                               } finally {
                                 setModalState(() => isPicking = false);
                               }
