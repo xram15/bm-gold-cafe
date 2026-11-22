@@ -64,6 +64,7 @@ class SupabaseService {
 
       // Charger le menu dynamique
       await fetchMenu();
+      await fetchPagePhotos();
 
       // Écouter les changements en temps réel
       _subscribeToRealtimeChanges();
@@ -426,6 +427,107 @@ class SupabaseService {
     final List<BookPage> updatedPages = List.from(currentBook.pages);
     updatedPages[pageIndex] = updatedPage;
     _updateBook(updatedPages);
+
+    // Sauvegarde locale instantanée
+    saveMenuToLocalStorage();
+
+    // Synchronisation Cloud immédiate pour les photos de cette page
+    _syncPagePhotosToCloud(pageIndex, updatedPage);
+  }
+
+  /// Synchroniser la configuration des photos d'une page sur Supabase (visible par tous les appareils)
+  Future<void> _syncPagePhotosToCloud(int pageIndex, BookPage page) async {
+    if (!_isConfigured || _client == null) return;
+    try {
+      final configPayload = {
+        'corner_photo': page.cornerPhotoPath,
+        'large_bottom_photo': page.largeBottomPhotoPath,
+        'large_bottom_title': page.largeBottomPhotoTitle,
+        'second_bottom_photo': page.secondBottomPhotoPath,
+        'second_bottom_title': page.secondBottomPhotoTitle,
+        'first_alternating_photo': page.firstAlternatingPhotoPath,
+        'first_alternating_title': page.firstAlternatingPhotoTitle,
+        'second_alternating_photo': page.secondAlternatingPhotoPath,
+        'second_alternating_title': page.secondAlternatingPhotoTitle,
+      };
+
+      final payload = {
+        'category_name': '__PAGE_PHOTOS__',
+        'name': 'page_$pageIndex',
+        'price': '0',
+        'description': jsonEncode(configPayload),
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      final existing = await _client!
+          .from('products')
+          .select('id')
+          .eq('category_name', '__PAGE_PHOTOS__')
+          .eq('name', 'page_$pageIndex')
+          .maybeSingle();
+
+      if (existing != null) {
+        await _client!.from('products').update(payload).eq('id', existing['id']);
+      } else {
+        await _client!.from('products').insert(payload);
+      }
+      debugPrint('[Supabase] Photos de la page $pageIndex synchronisées dans le cloud');
+    } catch (e) {
+      debugPrint('[Supabase] Erreur synchronisation photos page $pageIndex: $e');
+    }
+  }
+
+  /// Charger les photos des pages enregistrées dans le cloud Supabase
+  Future<void> fetchPagePhotos() async {
+    if (!_isConfigured || _client == null) return;
+    try {
+      final response = await _client!
+          .from('products')
+          .select('name, description')
+          .eq('category_name', '__PAGE_PHOTOS__');
+
+      final List<dynamic> rows = response as List<dynamic>;
+      if (rows.isEmpty) return;
+
+      final List<BookPage> updatedPages = List.from(currentBook.pages);
+      bool hasChanges = false;
+
+      for (final row in rows) {
+        final name = row['name'] as String? ?? '';
+        final desc = row['description'] as String? ?? '';
+        if (!name.startsWith('page_') || desc.isEmpty) continue;
+
+        final pageIdx = int.tryParse(name.replaceFirst('page_', ''));
+        if (pageIdx == null || pageIdx < 0 || pageIdx >= updatedPages.length) continue;
+
+        try {
+          final Map<String, dynamic> data = jsonDecode(desc) as Map<String, dynamic>;
+          final currentPage = updatedPages[pageIdx];
+
+          updatedPages[pageIdx] = currentPage.copyWith(
+            cornerPhotoPath: data['corner_photo'] as String? ?? currentPage.cornerPhotoPath,
+            largeBottomPhotoPath: data['large_bottom_photo'] as String? ?? currentPage.largeBottomPhotoPath,
+            largeBottomPhotoTitle: data['large_bottom_title'] as String? ?? currentPage.largeBottomPhotoTitle,
+            secondBottomPhotoPath: data['second_bottom_photo'] as String? ?? currentPage.secondBottomPhotoPath,
+            secondBottomPhotoTitle: data['second_bottom_title'] as String? ?? currentPage.secondBottomPhotoTitle,
+            firstAlternatingPhotoPath: data['first_alternating_photo'] as String? ?? currentPage.firstAlternatingPhotoPath,
+            firstAlternatingPhotoTitle: data['first_alternating_title'] as String? ?? currentPage.firstAlternatingPhotoTitle,
+            secondAlternatingPhotoPath: data['second_alternating_photo'] as String? ?? currentPage.secondAlternatingPhotoPath,
+            secondAlternatingPhotoTitle: data['second_alternating_title'] as String? ?? currentPage.secondAlternatingPhotoTitle,
+          );
+          hasChanges = true;
+        } catch (_) {}
+      }
+
+      if (hasChanges) {
+        _updateBook(updatedPages);
+        // Met également à jour le cache local avec les photos venues du Cloud
+        await saveMenuToLocalStorage();
+        debugPrint('[Supabase] Photos du livre synchronisées depuis le cloud (${rows.length} pages configurées).');
+      }
+    } catch (e) {
+      debugPrint('[Supabase] Erreur fetchPagePhotos: $e');
+    }
   }
 
   // ===========================================================================
@@ -478,8 +580,14 @@ class SupabaseService {
       _menuSubscription = _client!
           .from('products')
           .stream(primaryKey: ['id'])
+      _menuSubscription = _client!
+          .from('products')
+          .stream(primaryKey: ['id'])
           .listen(
-            (_) => fetchMenu(),
+            (_) {
+              fetchMenu();
+              fetchPagePhotos();
+            },
             onError: (Object error) {
               debugPrint('[Menu] Mises à jour en direct indisponibles; actualisation périodique activée.');
               unawaited(_menuSubscription?.cancel());
@@ -652,6 +760,11 @@ class SupabaseService {
             }
           }
         }
+        // 3. Sauvegarder également toutes les configurations photos de toutes les pages dans le cloud
+        for (int i = 0; i < currentBook.pages.length; i++) {
+          await _syncPagePhotosToCloud(i, currentBook.pages[i]);
+        }
+
         return true;
       } catch (e) {
         debugPrint('[Supabase] Erreur synchronisation cloud: $e');
