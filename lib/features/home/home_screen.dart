@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
               // 🎬 1. PARTIE HAUTE : VIDÉO 100% PURE (SANS AUCUN FILTRE SOMBRE)
               // ===============================================================
               Expanded(
-                flex: 30,
+                flex: 32,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -105,103 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
 
-                    // B. Titre "BIENVENUE À L'ESPACE VIP" (descendu vers le bas, avec 4 étoiles)
-                    SafeArea(
-                      bottom: false,
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 18.0),
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onLongPress: () => AdminScreen.open(context),
-                            onDoubleTap: () => AdminScreen.open(context),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text(
-                                  "BIENVENUE À L'ESPACE",
-                                  style: TextStyle(
-                                    fontFamily: 'Montserrat',
-                                    letterSpacing: 4.5,
-                                    fontSize: 12.5,
-                                    color: AppColors.goldLight,
-                                    fontWeight: FontWeight.w700,
-                                    shadows: [
-                                      Shadow(color: Colors.black87, blurRadius: 14),
-                                      Shadow(color: Colors.black, blurRadius: 8),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                ShaderMask(
-                                  shaderCallback: (bounds) => const LinearGradient(
-                                    colors: [
-                                      Color(0xFFFFF2A8),
-                                      AppColors.gold,
-                                      AppColors.goldDark,
-                                    ],
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                  ).createShader(bounds),
-                                  child: const Text(
-                                    'V I P',
-                                    style: TextStyle(
-                                      fontFamily: 'Svetze',
-                                      fontSize: 42,
-                                      letterSpacing: 8.0,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      shadows: [
-                                        Shadow(color: Colors.black, blurRadius: 16),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-
-                                // 4 étoiles dorées (comme demandé)
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      width: 26,
-                                      height: 1.2,
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [Colors.transparent, AppColors.gold],
-                                        ),
-                                        borderRadius: BorderRadius.circular(1),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    ...List.generate(4, (index) {
-                                      return const Padding(
-                                        padding: EdgeInsets.symmetric(horizontal: 2.5),
-                                        child: Icon(Icons.star, size: 12, color: AppColors.gold),
-                                      );
-                                    }),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      width: 26,
-                                      height: 1.2,
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [AppColors.gold, Colors.transparent],
-                                        ),
-                                        borderRadius: BorderRadius.circular(1),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // C. Liseré doré courbé en forme d'arc
+                    // B. Liseré doré courbé en forme d'arc
                     Positioned.fill(
                       child: IgnorePointer(
                         child: CustomPaint(
@@ -210,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
 
-                    // D. Bouton discret d'accès gérant en haut à droite
+                    // C. Bouton discret d'accès gérant en haut à droite
                     SafeArea(
                       child: Align(
                         alignment: Alignment.topRight,
@@ -233,15 +137,20 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               // ===============================================================
-              // 📖 2. PARTIE BASSE : LE LIVRE AGRANDI 1.3X AVEC LES APPLIQUES
+              // 📖 2. PARTIE BASSE : TITRE VIP + LE LIVRE ET APPLIQUES + BOUTON
               // ===============================================================
               Expanded(
-                flex: 70,
+                flex: 68,
                 child: Container(
                   color: lightBg,
                   padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
                   child: Column(
                     children: [
+                      // ── TITRE "BIENVENUE À L'ESPACE VIP 4*" EN HAUT DU LIVRE ──
+                      _buildVipHeader(),
+
+                      const SizedBox(height: 2),
+
                       // ── LE LIVRE BM GOLD AGRANDI 1.3x + 2 APPLIQUES MURALE ──
                       Expanded(
                         child: LayoutBuilder(
@@ -457,6 +366,87 @@ class _HomeScreenState extends State<HomeScreen> {
           fit: BoxFit.contain,
           errorBuilder: (c, e, s) => const SizedBox.shrink(),
         ),
+      ),
+    );
+  }
+
+  /// Titre royal "BIENVENUE À L'ESPACE VIP 4*" placé en haut du livre sur fond clair
+  Widget _buildVipHeader() {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: () => AdminScreen.open(context),
+      onDoubleTap: () => AdminScreen.open(context),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            "BIENVENUE À L'ESPACE",
+            style: TextStyle(
+              fontFamily: 'Montserrat',
+              letterSpacing: 3.5,
+              fontSize: 11,
+              color: Color(0xFF7A5826), // Bronze doré prestigieux sur fond clair
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 1),
+          ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [
+                Color(0xFFC59B4B),
+                Color(0xFF9E722C),
+                Color(0xFF7A5826),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ).createShader(bounds),
+            child: const Text(
+              'V I P',
+              style: TextStyle(
+                fontFamily: 'Svetze',
+                fontSize: 24,
+                letterSpacing: 5.0,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          // 4 étoiles dorées
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 20,
+                height: 1.2,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Colors.transparent, Color(0xFFC59B4B)],
+                  ),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+              const SizedBox(width: 5),
+              ...List.generate(4, (index) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 1.5),
+                  child: Icon(Icons.star, size: 10, color: Color(0xFFC59B4B)),
+                );
+              }),
+              const SizedBox(width: 5),
+              Container(
+                width: 20,
+                height: 1.2,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFC59B4B), Colors.transparent],
+                  ),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

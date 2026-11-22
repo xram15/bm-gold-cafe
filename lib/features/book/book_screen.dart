@@ -115,7 +115,7 @@ class _BookScreenState extends State<BookScreen> {
                     alignment: Alignment.center,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
                         child: VerticalBookFlipView(
                           key: _flipKey,
                           book: currentBook,
@@ -127,10 +127,11 @@ class _BookScreenState extends State<BookScreen> {
                         ),
                       ),
 
-                      // Flèche flottante retour (Page précédente)
+                      // Flèche flottante retour (Page précédente) - Positionnée en bas pour ne pas cacher le contenu
                       if (_currentPage > 0)
                         Positioned(
-                          left: 4,
+                          left: 8,
+                          bottom: 20,
                           child: _FloatingNavBtn(
                             icon: Icons.chevron_left_rounded,
                             onTap: () {
@@ -141,10 +142,11 @@ class _BookScreenState extends State<BookScreen> {
                           ),
                         ),
 
-                      // Flèche flottante avant (Page suivante)
+                      // Flèche flottante avant (Page suivante) - Positionnée en bas pour ne JAMAIS cacher les prix
                       if (_currentPage < totalPages - 1)
                         Positioned(
-                          right: 4,
+                          right: 8,
+                          bottom: 20,
                           child: _FloatingNavBtn(
                             icon: Icons.chevron_right_rounded,
                             onTap: () {
@@ -158,21 +160,32 @@ class _BookScreenState extends State<BookScreen> {
                   ),
                 ),
 
-                // ── Indicateurs à points dorés discrets (sans boutons encombrants) ──
+                // ── Indicateurs à points dorés agrandis au swipe ─────────────
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 6.0, top: 4.0),
+                  padding: const EdgeInsets.only(bottom: 10.0, top: 4.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(totalPages, (index) {
                       final bool isCurrent = index == _currentPage;
                       return AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
-                        width: isCurrent ? 20 : 6,
-                        height: 5,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: isCurrent ? 32 : 10,
+                        height: 8,
                         decoration: BoxDecoration(
-                          color: isCurrent ? goldBright : const Color(0xFFC59B4B).withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(3),
+                          color: isCurrent ? goldBright : const Color(0xFFC59B4B).withValues(alpha: 0.35),
+                          borderRadius: BorderRadius.circular(4),
+                          boxShadow: isCurrent
+                              ? [
+                                  BoxShadow(
+                                    color: goldBright.withValues(alpha: 0.55),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ]
+                              : null,
                         ),
                       );
                     }),
@@ -207,23 +220,23 @@ class _FloatingNavBtn extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.95),
+            color: Colors.white.withValues(alpha: 0.92),
             border: Border.all(
-              color: const Color(0xFFC59B4B).withValues(alpha: 0.5),
+              color: const Color(0xFFC59B4B).withValues(alpha: 0.6),
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Icon(icon, color: iconColor, size: 24),
+          child: Icon(icon, color: iconColor, size: 20),
         ),
       ),
     );

@@ -125,7 +125,7 @@ class VerticalBookPage extends StatelessWidget {
 
             // ── 3. Contenu principal unifié (titre, texte, photos) ───────
             Padding(
-              padding: const EdgeInsets.only(left: 36, top: 14, right: 18, bottom: 10),
+              padding: const EdgeInsets.only(left: 36, top: 14, right: 24, bottom: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -811,43 +811,6 @@ class VerticalBookPage extends StatelessWidget {
             child: AppCachedImage(
               imagePath: imagePath,
               fit: BoxFit.cover,
-            ),
-          ),
-        ),
-
-        // Capsule dorée "CHEF" sur le bord inférieur
-        Positioned(
-          bottom: 0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFF161619),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: goldBorder.withValues(alpha: 0.9), width: 1.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.star, size: 8, color: AppColors.gold),
-                SizedBox(width: 2.5),
-                Text(
-                  'BM GOLD',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    color: AppColors.gold,
-                    fontSize: 7.8,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ],
             ),
           ),
         ),
