@@ -26,9 +26,7 @@ const Book bmMenu = Book(
       style: PageStyle.alternatingPhotos,
       cornerPhotoPath: 'assets/petit_dejeuner/gourmet_breakfast.jpg',
       firstAlternatingPhotoPath: 'assets/petit_dejeuner/banner_breakfast.jpg',
-      firstAlternatingPhotoTitle: 'LE GRAND BRUNCH ROYAL CONTINENTAL',
       secondAlternatingPhotoPath: 'assets/petit_dejeuner/dish_croissant.jpg',
-      secondAlternatingPhotoTitle: 'CROISSANTS PUR BEURRE ARTISANAUX',
       category: MenuCategory(
         title: 'PETIT DÉJEUNER & BRUNCH',
         products: <Product>[],
@@ -92,7 +90,6 @@ const Book bmMenu = Book(
       style: PageStyle.singleLargeBottom,
       cornerPhotoPath: 'assets/restaurant/cafe.png',
       largeBottomPhotoPath: 'assets/restaurant/cat_boissons.png',
-      largeBottomPhotoTitle: "L'ÉTHIQUE DU JUS FRAIS",
       category: MenuCategory(
         title: 'JUS FRAIS',
         products: <Product>[],
@@ -113,21 +110,7 @@ const Book bmMenu = Book(
     ),
 
     // -------------------------------------------------------------------------
-    // PAGE 6 : PASTA & RISOTTO
-    // -------------------------------------------------------------------------
-    BookPage(
-      style: PageStyle.singleLargeBottom,
-      cornerPhotoPath: 'assets/restaurant/pasta.jfif',
-      largeBottomPhotoPath: 'assets/restaurant/pasta.jfif',
-      largeBottomPhotoTitle: 'PASTA FRESCA & RISOTTO NOBLE',
-      category: MenuCategory(
-        title: 'PASTA & RISOTTO',
-        products: <Product>[],
-      ),
-    ),
-
-    // -------------------------------------------------------------------------
-    // PAGE 7 : CHICHA NORMALE
+    // PAGE 6 : CHICHA NORMALE
     // -------------------------------------------------------------------------
     BookPage(
       style: PageStyle.sectionsWithBackground,
@@ -140,7 +123,7 @@ const Book bmMenu = Book(
     ),
 
     // -------------------------------------------------------------------------
-    // PAGE 8 : CHICHA QUASAR & SPÉCIALE
+    // PAGE 7 : CHICHA QUASAR & SPÉCIALE
     // -------------------------------------------------------------------------
     BookPage(
       style: PageStyle.sectionsWithBackground,

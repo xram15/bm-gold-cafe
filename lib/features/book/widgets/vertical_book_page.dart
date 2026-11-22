@@ -148,9 +148,9 @@ class VerticalBookPage extends StatelessWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withValues(alpha: 0.50),
-                                Colors.black.withValues(alpha: 0.38),
-                                Colors.black.withValues(alpha: 0.55),
+                                Colors.black.withValues(alpha: 0.60),
+                                Colors.black.withValues(alpha: 0.58),
+                                Colors.black.withValues(alpha: 0.65),
                               ],
                             ),
                           ),
@@ -955,33 +955,6 @@ class VerticalBookPage extends StatelessWidget {
               imagePath: imagePath,
               fit: BoxFit.cover,
             ),
-            if (title != null && title.isNotEmpty)
-              Positioned(
-                bottom: 4,
-                left: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.85),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: goldBorder.withValues(alpha: 0.7), width: 0.6),
-                  ),
-                  child: Text(
-                    title.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      color: goldBorder,
-                      fontSize: 7.2,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -1123,38 +1096,7 @@ class VerticalBookPage extends StatelessWidget {
                   ),
                 ),
 
-                if (photoTitle != null && photoTitle.isNotEmpty)
-                  Positioned(
-                    bottom: 5,
-                    left: 8,
-                    right: 8,
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF101014).withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: goldBorder.withValues(alpha: 0.85),
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Text(
-                          photoTitle.toUpperCase(),
-                          style: TextStyle(
-                            fontFamily: 'Montserrat',
-                            color: goldBorder,
-                            fontSize: 8.2,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  ),
+                // Pas de texte superflu sur les photos
               ],
             ),
           ),
