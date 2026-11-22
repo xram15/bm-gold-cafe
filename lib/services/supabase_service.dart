@@ -21,6 +21,10 @@ class SupabaseService {
 
   bool _isConfigured = false;
   bool get isConfigured => _isConfigured;
+
+  // Complété dès que le client Supabase est utilisable (avant le chargement du menu)
+  final Completer<void> _ready = Completer<void>();
+  Future<void> get ready => _ready.future;
   StreamSubscription<List<Map<String, dynamic>>>? _menuSubscription;
   Timer? _menuRefreshTimer;
 
@@ -76,6 +80,7 @@ class SupabaseService {
         anonKey: supabaseAnonKey,
       );
       _isConfigured = true;
+      if (!_ready.isCompleted) _ready.complete();
       debugPrint('[Supabase] Initialisé avec succès sur $supabaseUrl');
 
       // Charger le menu et les photos en une seule passe pour éviter tout clignotement / flash d'anciennes photos
@@ -86,6 +91,7 @@ class SupabaseService {
     } catch (e) {
       debugPrint('[Supabase] Erreur initialisation: $e');
       _isConfigured = false;
+      if (!_ready.isCompleted) _ready.complete();
     }
   }
 

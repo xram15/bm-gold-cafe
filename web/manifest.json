@@ -1,11 +1,11 @@
 {
-    "name": "yocca3",
-    "short_name": "yocca3",
+    "name": "BM GOLD - Café Lounge",
+    "short_name": "BM GOLD",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0D0D10",
+    "theme_color": "#0D0D10",
+    "description": "BM GOLD - L'Éthique du Café. Menu café lounge VIP.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

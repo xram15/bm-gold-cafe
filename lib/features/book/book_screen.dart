@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../core/app_colors.dart';
 import '../../data/models/book_model.dart';
 import '../../services/supabase_service.dart';
 import 'widgets/vertical_book_flip_view.dart';
@@ -22,7 +21,6 @@ class _BookScreenState extends State<BookScreen> {
   Widget build(BuildContext context) {
     const Color darkColor = Color(0xFF1A1A1D);
     const Color goldAccent = Color(0xFF8B642C);
-    const Color goldBright = AppColors.gold;
 
     return ValueListenableBuilder<Book>(
       valueListenable: SupabaseService.instance.currentBookNotifier,
@@ -179,63 +177,28 @@ class _BookScreenState extends State<BookScreen> {
                   ),
                 ),
 
-                // ── Indicateurs de page : chiffres dorés couronnés, tactiles ──
+                // ── Chiffre doré de la page active, centré sur fond sombre ──
                 Container(
                   width: double.infinity,
                   color: darkColor,
-                  padding: const EdgeInsets.only(top: 12.0, bottom: 26.0),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(totalPages, (index) {
-                        final bool isCurrent = index == _currentPage;
-                        final int number = index + 1;
-                        if (number > 10) {
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeOutCubic,
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            width: isCurrent ? 32 : 10,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: isCurrent
-                                  ? goldBright
-                                  : const Color(
-                                      0xFFC59B4B,
-                                    ).withValues(alpha: 0.35),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          );
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5),
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => _flipKey.currentState?.goToPage(index),
-                            child: AnimatedOpacity(
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.easeOutCubic,
-                              opacity: isCurrent ? 1.0 : 0.55,
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeOutCubic,
-                                width: isCurrent ? 72 : 34,
-                                height: isCurrent ? 72 : 34,
-                                child: Image.asset(
-                                  'assets/numbers/num_$number.png',
-                                  fit: BoxFit.contain,
-                                  filterQuality: FilterQuality.medium,
-                                  gaplessPlayback: true,
-                                ),
-                              ),
-                            ),
+                  padding: const EdgeInsets.only(top: 10.0, bottom: 22.0),
+                  child: _currentPage + 1 <= 10
+                      ? Image.asset(
+                          'assets/numbers/num_${_currentPage + 1}.png',
+                          width: 72,
+                          height: 72,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.medium,
+                        )
+                      : Text(
+                          '${_currentPage + 1}',
+                          style: const TextStyle(
+                            fontFamily: 'Svetze',
+                            color: Color(0xFFD4AF37),
+                            fontSize: 34,
+                            fontWeight: FontWeight.bold,
                           ),
-                        );
-                      }),
-                    ),
-                  ),
+                        ),
                 ),
               ],
             ),

@@ -28,6 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _checkScannedTable() async {
     final tableId = Uri.base.queryParameters['table'];
     if (tableId == null || tableId.isEmpty) return;
+    // Attendre que Supabase soit initialisé (le 1er rendu arrive avant la fin de l'init)
+    await SupabaseService.instance.ready.timeout(const Duration(seconds: 10), onTimeout: () {});
     final status = await SupabaseService.instance.fetchTableStatus(tableId);
     if (!mounted || status == null || status['booked'] != true) return;
     _showReservedDialog(status);
