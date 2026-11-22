@@ -435,7 +435,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         final page = book.pages[_selectedPageIndex];
         final title = page.category?.title ?? 'PAGE ${_selectedPageIndex + 1}';
         return Container(
-          color: const Color(0xFFF2F3F8),
+          color: const Color(0xFFC9C5B1),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
@@ -455,19 +455,41 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
 
   Widget _buildTopHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 16, 0),
+      padding: const EdgeInsets.fromLTRB(12, 14, 16, 0),
       child: Row(children: [
-        const Icon(Icons.workspace_premium, size: 32, color: Color(0xFFC89A3B)),
-        const SizedBox(width: 9),
+        IconButton(
+          tooltip: 'Retour à l’accueil',
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Color(0xFF171717)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        const SizedBox(width: 4),
+        const Icon(Icons.workspace_premium, size: 28, color: Color(0xFFC89A3B)),
+        const SizedBox(width: 8),
         const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('BM GOLD', style: TextStyle(fontFamily: 'Svetze', fontSize: 19, color: Color(0xFF171717))),
+          Text('BM GOLD', style: TextStyle(fontFamily: 'Svetze', fontSize: 18, color: Color(0xFF171717))),
           Text('L’ÉTHIQUE DU CAFÉ', style: TextStyle(fontSize: 7, letterSpacing: 1.2, color: Color(0xFF555967))),
         ])),
-        IconButton(
-          tooltip: 'Enregistrer',
-          color: const Color(0xFF171717),
-          onPressed: _isSaving ? null : _handleManualSave,
-          icon: _isSaving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF171717))) : const Icon(Icons.save_outlined, size: 22, color: Color(0xFF171717)),
+        Container(
+          margin: const EdgeInsets.only(right: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2E7D32),
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            tooltip: 'Enregistrer',
+            onPressed: _isSaving ? null : _handleManualSave,
+            icon: _isSaving
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.save_outlined, size: 20, color: Colors.white),
+          ),
+        ),
         ),
         PopupMenuButton<String>(
           tooltip: 'Compte administrateur',
@@ -583,46 +605,44 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   }
 
   Widget _buildProductCard(Product product) {
-    final image = product.imagePath;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: .72), borderRadius: BorderRadius.circular(12)),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: SizedBox(width: 88, height: 96, child: image == null || image.isEmpty
-              ? const ColoredBox(color: Color(0xFFECEEF1), child: Icon(Icons.restaurant_menu, color: Color(0xFF9A9DA5)))
-              : image.startsWith('http') ? Image.network(image, fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.broken_image_outlined))
-              : Image.asset(image, fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.broken_image_outlined))),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF20232D))),
-          if (product.description != null && product.description!.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(product.description!, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: Color(0xFF777D8D))),
+    return InkWell(
+      onTap: () => _showEditProductDialog(product),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: .85),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
           ],
-          const SizedBox(height: 8),
-          InkWell(onTap: () => _showQuickPriceDialog(product), child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            decoration: BoxDecoration(color: const Color(0xFFF8ECD0), borderRadius: BorderRadius.circular(8)),
-            child: Text(product.price, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF302B20))),
-          )),
-        ])),
-        IconButton(
-          tooltip: 'Modifier',
-          onPressed: () => _showEditProductDialog(product),
-          icon: const Icon(Icons.edit_outlined, size: 19, color: Color(0xFFAC7D24)),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
         ),
-        PopupMenuButton<String>(
-          tooltip: 'Actions du produit', icon: const Icon(Icons.more_horiz, size: 20), padding: EdgeInsets.zero,
-          onSelected: (action) { if (action == 'edit') _showEditProductDialog(product); if (action == 'delete') _showDeleteProductDialog(product); },
-          itemBuilder: (context) => const [PopupMenuItem(value: 'edit', child: Text('Modifier')), PopupMenuItem(value: 'delete', child: Text('Supprimer'))],
-        ),
-      ]),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF20232D))),
+            if (product.description != null && product.description!.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(product.description!, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10.5, color: Color(0xFF777D8D))),
+            ],
+            const SizedBox(height: 8),
+            InkWell(onTap: () => _showQuickPriceDialog(product), child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(color: const Color(0xFFF8ECD0), borderRadius: BorderRadius.circular(8)),
+              child: Text(product.price, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF302B20))),
+            )),
+          ])),
+          PopupMenuButton<String>(
+            tooltip: 'Actions du produit', icon: const Icon(Icons.more_horiz, size: 20), padding: EdgeInsets.zero,
+            onSelected: (action) { if (action == 'edit') _showEditProductDialog(product); if (action == 'delete') _showDeleteProductDialog(product); },
+            itemBuilder: (context) => const [PopupMenuItem(value: 'edit', child: Text('Modifier')), PopupMenuItem(value: 'delete', child: Text('Supprimer'))],
+          ),
+        ]),
+      ),
     );
   }
 
@@ -631,7 +651,6 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: const BoxDecoration(color: Color(0xFFFAFAFC), borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
       child: Row(children: [
-        _navigationItem(Icons.home_outlined, 'Accueil', () => Navigator.pop(context)),
         _navigationItem(Icons.restaurant_menu, 'Menu', () {}, selected: true),
         _navigationItem(Icons.event_seat_outlined, 'Réservation', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReservationsScreen()))),
         _navigationItem(Icons.settings_outlined, 'Paramètres', _showAdminManagementDialog),

@@ -11,6 +11,10 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // Augmentation massive du cache d'images mémoire (150 Mo, 1000 images) pour éviter tout rechargement
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 150 * 1024 * 1024;
+  PaintingBinding.instance.imageCache.maximumSize = 1000;
+
   // Initialisation rapide non-bloquante pour affichage instantané
   SupabaseService.instance.init();
 

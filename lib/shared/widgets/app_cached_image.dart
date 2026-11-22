@@ -1,6 +1,24 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+
+class _MemoryImageCache {
+  static final Map<String, Uint8List> _cache = {};
+
+  static Uint8List? getBytes(String imagePath) {
+    if (_cache.containsKey(imagePath)) return _cache[imagePath];
+    try {
+      final commaIdx = imagePath.indexOf(',');
+      final base64Str = commaIdx != -1 ? imagePath.substring(commaIdx + 1) : imagePath;
+      final bytes = base64Decode(base64Str);
+      _cache[imagePath] = bytes;
+      return bytes;
+    } catch (_) {
+      return null;
+    }
+  }
+}
 
 class AppCachedImage extends StatelessWidget {
   final String imagePath;
@@ -28,22 +46,20 @@ class AppCachedImage extends StatelessWidget {
           ),
         );
 
-    // Support des images importées depuis le téléphone en data:image base64
+    // Support des images importées depuis le téléphone en data:image base64 avec mise en cache mémoire RAM
     if (imagePath.startsWith('data:image')) {
-      try {
-        final commaIdx = imagePath.indexOf(',');
-        final base64Str = commaIdx != -1 ? imagePath.substring(commaIdx + 1) : imagePath;
-        final bytes = base64Decode(base64Str);
+      final bytes = _MemoryImageCache.getBytes(imagePath);
+      if (bytes != null) {
         return Image.memory(
           bytes,
           width: width,
           height: height,
           fit: fit,
+          gaplessPlayback: true,
           errorBuilder: (context, error, stackTrace) => fallback,
         );
-      } catch (_) {
-        return fallback;
       }
+      return fallback;
     }
 
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
@@ -52,6 +68,7 @@ class AppCachedImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
+        gaplessPlayback: true,
         errorBuilder: (context, error, stackTrace) => fallback,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
@@ -77,6 +94,7 @@ class AppCachedImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
+      gaplessPlayback: true,
       errorBuilder: (context, error, stackTrace) => fallback,
     );
   }
