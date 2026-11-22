@@ -444,13 +444,7 @@ class SupabaseService {
       final Map<String, List<Product>> grouped = {};
       for (final item in data) {
         final cat = (item['category_name'] as String?)?.trim().toUpperCase() ?? 'AUTRE';
-        grouped.putIfAbsent(cat, () => []).add(Product(
-          id: item['id']?.toString(),
-          name: item['name'] as String? ?? '',
-          price: item['price'] as String? ?? '',
-          description: item['description'] as String?,
-          imagePath: item['image_path'] as String?,
-        ));
+        grouped.putIfAbsent(cat, () => []).add(Product.fromJson(item as Map<String, dynamic>));
       }
 
       final List<BookPage> updatedPages = [];
@@ -572,28 +566,35 @@ class SupabaseService {
         for (final page in currentBook.pages) {
           final catTitle = page.category?.title ?? '';
           for (final prod in page.category?.products ?? <Product>[]) {
+            final payload = {
+              'category_name': catTitle,
+              'name': prod.name,
+              'price': prod.price,
+              'description': prod.toJson()['description'],
+              'image_path': prod.imagePath,
+              'updated_at': DateTime.now().toIso8601String(),
+            };
             try {
-              await _client!.from('products').upsert({
-                'category_name': catTitle,
-                'name': prod.name,
-                'price': prod.price,
-                'description': prod.description,
-                'image_path': prod.imagePath,
-                'updated_at': DateTime.now().toIso8601String(),
-              }, onConflict: 'category_name,name');
+              await _client!.from('products').upsert(payload, onConflict: 'category_name,name');
             } catch (inner) {
-              // Si la contrainte d'unicité n'est pas encore créée, insert direct
-              debugPrint('[Supabase] Tentative insert: $inner');
+              // Si la contrainte d'unicité n'est pas encore créée, update ou insert direct
+              debugPrint('[Supabase] Tentative fallback: $inner');
               try {
-                await _client!.from('products').insert({
-                  'category_name': catTitle,
-                  'name': prod.name,
-                  'price': prod.price,
-                  'description': prod.description,
-                  'image_path': prod.imagePath,
-                  'updated_at': DateTime.now().toIso8601String(),
-                });
-              } catch (_) {}
+                final existing = await _client!
+                    .from('products')
+                    .select('id')
+                    .eq('category_name', catTitle)
+                    .eq('name', prod.name)
+                    .maybeSingle();
+
+                if (existing != null) {
+                  await _client!.from('products').update(payload).eq('id', existing['id']);
+                } else {
+                  await _client!.from('products').insert(payload);
+                }
+              } catch (e2) {
+                debugPrint('[Supabase] Erreur fallback insert/update: $e2');
+              }
             }
           }
         }
