@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../data/models/book_model.dart';
@@ -13,7 +14,8 @@ class BookScreen extends StatefulWidget {
 }
 
 class _BookScreenState extends State<BookScreen> {
-  final GlobalKey<VerticalBookFlipViewState> _flipKey = GlobalKey<VerticalBookFlipViewState>();
+  final GlobalKey<VerticalBookFlipViewState> _flipKey =
+      GlobalKey<VerticalBookFlipViewState>();
   int _currentPage = 0;
 
   @override
@@ -25,7 +27,9 @@ class _BookScreenState extends State<BookScreen> {
     return ValueListenableBuilder<Book>(
       valueListenable: SupabaseService.instance.currentBookNotifier,
       builder: (context, activeBook, _) {
-        final currentBook = SupabaseService.instance.isConfigured ? activeBook : widget.book;
+        final currentBook = SupabaseService.instance.isConfigured
+            ? activeBook
+            : widget.book;
         final int totalPages = currentBook.pages.length;
 
         return Scaffold(
@@ -36,7 +40,10 @@ class _BookScreenState extends State<BookScreen> {
               children: [
                 // ── Barre supérieure élégante sur fond clair ──────────────────
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10.0,
+                    vertical: 6.0,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
@@ -48,153 +55,167 @@ class _BookScreenState extends State<BookScreen> {
                         onPressed: () => Navigator.of(context).pop(),
                         tooltip: 'Retour à l\'accueil',
                       ),
-                      const Spacer(),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Text(
-                            'B M   G O L D',
-                            style: TextStyle(
-                              fontFamily: 'Svetze',
-                              color: darkColor,
-                              fontSize: 22,
-                              letterSpacing: 4.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            "L'ÉTHIQUE DU CAFÉ",
-                            style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 9.5,
-                              letterSpacing: 2.8,
-                              color: goldAccent,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      // Indicateur de page (Page X / Y)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFFC59B4B).withValues(alpha: 0.45),
-                            width: 1.0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          'Page ${_currentPage + 1} / $totalPages',
-                          style: const TextStyle(
-                            color: darkColor,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Montserrat',
-                            letterSpacing: 0.5,
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Text(
+                                'B M   G O L D',
+                                style: TextStyle(
+                                  fontFamily: 'Svetze',
+                                  color: darkColor,
+                                  fontSize: 22,
+                                  letterSpacing: 4.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                "L'ÉTHIQUE DU CAFÉ",
+                                style: TextStyle(
+                                  fontFamily: 'Montserrat',
+                                  fontSize: 9.5,
+                                  letterSpacing: 2.8,
+                                  color: goldAccent,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                      const SizedBox(width: 48),
                     ],
                   ),
                 ),
 
                 // ── Zone centrale : Menu vertical maximisé avec tournage de page ─
                 Expanded(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 2.0),
-                        child: VerticalBookFlipView(
-                          key: _flipKey,
-                          book: currentBook,
-                          onPageChanged: (page) {
-                            setState(() {
-                              _currentPage = page;
-                            });
-                          },
-                        ),
-                      ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final frameWidth = math.min(
+                        constraints.maxWidth,
+                        constraints.maxHeight / 1.48 + 16,
+                      );
+                      final availableHeight = math.max(
+                        0.0,
+                        constraints.maxHeight - 4,
+                      );
+                      final availableWidth = math.max(0.0, frameWidth - 16);
+                      final frameHeight = math.min(
+                        constraints.maxHeight,
+                        math.min(
+                              availableHeight,
+                              availableWidth * 1.48 * 1.21,
+                            ) +
+                            4,
+                      );
+                      return Align(
+                        alignment: Alignment.topCenter,
+                        child: SizedBox(
+                          width: frameWidth,
+                          height: frameHeight,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                  vertical: 2.0,
+                                ),
+                                child: VerticalBookFlipView(
+                                  key: _flipKey,
+                                  book: currentBook,
+                                  onPageChanged: (page) {
+                                    setState(() {
+                                      _currentPage = page;
+                                    });
+                                  },
+                                ),
+                              ),
 
-                      // Flèche retour (Page précédente) - Au milieu vertical, calée tout à gauche
-                      if (_currentPage > 0)
-                        Positioned(
-                          left: 2,
-                          top: 0,
-                          bottom: 0,
-                          child: Center(
-                            child: _FloatingNavBtn(
-                              icon: Icons.chevron_left_rounded,
-                              onTap: () {
-                                _flipKey.currentState?.flipBackward();
-                              },
-                              iconColor: darkColor,
-                              tooltip: 'Page précédente',
-                            ),
+                              // Flèche retour (Page précédente) - Au milieu vertical, calée tout à gauche
+                              if (_currentPage > 0)
+                                Positioned(
+                                  left: 2,
+                                  top: 0,
+                                  bottom: 0,
+                                  child: Center(
+                                    child: _FloatingNavBtn(
+                                      icon: Icons.chevron_left_rounded,
+                                      onTap: () {
+                                        _flipKey.currentState?.flipBackward();
+                                      },
+                                      iconColor: darkColor,
+                                      tooltip: 'Page précédente',
+                                    ),
+                                  ),
+                                ),
+
+                              // Flèche avant (Page suivante) - Au milieu vertical, calée tout à droite
+                              if (_currentPage < totalPages - 1)
+                                Positioned(
+                                  right: 2,
+                                  top: 0,
+                                  bottom: 0,
+                                  child: Center(
+                                    child: _FloatingNavBtn(
+                                      icon: Icons.chevron_right_rounded,
+                                      onTap: () {
+                                        _flipKey.currentState?.flipForward();
+                                      },
+                                      iconColor: darkColor,
+                                      tooltip: 'Page suivante',
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-
-                      // Flèche avant (Page suivante) - Au milieu vertical, calée tout à droite
-                      if (_currentPage < totalPages - 1)
-                        Positioned(
-                          right: 2,
-                          top: 0,
-                          bottom: 0,
-                          child: Center(
-                            child: _FloatingNavBtn(
-                              icon: Icons.chevron_right_rounded,
-                              onTap: () {
-                                _flipKey.currentState?.flipForward();
-                              },
-                              iconColor: darkColor,
-                              tooltip: 'Page suivante',
-                            ),
-                          ),
-                        ),
-                    ],
+                      );
+                    },
                   ),
                 ),
 
                 // ── Indicateurs à points dorés agrandis au swipe ─────────────
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10.0, top: 4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(totalPages, (index) {
-                      final bool isCurrent = index == _currentPage;
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOutCubic,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: isCurrent ? 32 : 10,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: isCurrent ? goldBright : const Color(0xFFC59B4B).withValues(alpha: 0.35),
-                          borderRadius: BorderRadius.circular(4),
-                          boxShadow: isCurrent
-                              ? [
-                                  BoxShadow(
-                                    color: goldBright.withValues(alpha: 0.55),
-                                    blurRadius: 8,
-                                    spreadRadius: 1,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ]
-                              : null,
-                        ),
-                      );
-                    }),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(totalPages, (index) {
+                        final bool isCurrent = index == _currentPage;
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeOutCubic,
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: isCurrent ? 32 : 10,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: isCurrent
+                                ? goldBright
+                                : const Color(
+                                    0xFFC59B4B,
+                                  ).withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(4),
+                            boxShadow: isCurrent
+                                ? [
+                                    BoxShadow(
+                                      color: goldBright.withValues(alpha: 0.55),
+                                      blurRadius: 8,
+                                      spreadRadius: 1,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                        );
+                      }),
+                    ),
                   ),
                 ),
               ],

@@ -21,7 +21,9 @@ class VerticalBookPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final BookPage? pageData = pageIndex < book.pages.length ? book.pages[pageIndex] : null;
+    final BookPage? pageData = pageIndex < book.pages.length
+        ? book.pages[pageIndex]
+        : null;
 
     // ── Thème Noir, Gold & Blanc Impérial BM GOLD ────────────────────────────
     const Color pageBg = AppColors.bookBackground;
@@ -29,7 +31,7 @@ class VerticalBookPage extends StatelessWidget {
     const Color textColor = AppColors.textWhite;
     const Color titleColor = AppColors.gold;
     const Color priceColor = AppColors.gold;
-    const Color descColor = AppColors.textMuted;
+    const Color descColor = Color(0xFFA9A9A9);
 
     final String categoryTitle = pageData?.category?.title ?? book.title;
     final List<Product> products = pageData?.category?.products ?? [];
@@ -116,9 +118,7 @@ class VerticalBookPage extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(left: 20),
                 child: CustomPaint(
-                  painter: VerticalPageBorderPainter(
-                    borderColor: goldBorder,
-                  ),
+                  painter: VerticalPageBorderPainter(borderColor: goldBorder),
                 ),
               ),
             ),
@@ -164,7 +164,12 @@ class VerticalBookPage extends StatelessWidget {
 
             // ── 3. Contenu principal unifié (titre, texte, photos) ───────
             Padding(
-              padding: const EdgeInsets.only(left: 36, top: 14, right: 24, bottom: 10),
+              padding: const EdgeInsets.only(
+                left: 36,
+                top: 14,
+                right: 24,
+                bottom: 10,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -189,12 +194,26 @@ class VerticalBookPage extends StatelessWidget {
                         // Petite ligne ornementale dorée sous le titre
                         Row(
                           children: [
-                            Container(width: 26, height: 1, color: goldBorder.withValues(alpha: 0.75)),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              child: Icon(Icons.star, size: 7, color: goldBorder.withValues(alpha: 0.85)),
+                            Container(
+                              width: 26,
+                              height: 1,
+                              color: goldBorder.withValues(alpha: 0.75),
                             ),
-                            Container(width: 26, height: 1, color: goldBorder.withValues(alpha: 0.75)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: Icon(
+                                Icons.star,
+                                size: 7,
+                                color: goldBorder.withValues(alpha: 0.85),
+                              ),
+                            ),
+                            Container(
+                              width: 26,
+                              height: 1,
+                              color: goldBorder.withValues(alpha: 0.75),
+                            ),
                           ],
                         ),
                       ],
@@ -233,7 +252,11 @@ class VerticalBookPage extends StatelessWidget {
                       ),
                       Row(
                         children: [
-                          Container(width: 20, height: 1, color: goldBorder.withValues(alpha: 0.6)),
+                          Container(
+                            width: 20,
+                            height: 1,
+                            color: goldBorder.withValues(alpha: 0.6),
+                          ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 6),
                             child: Text(
@@ -247,7 +270,11 @@ class VerticalBookPage extends StatelessWidget {
                               ),
                             ),
                           ),
-                          Container(width: 20, height: 1, color: goldBorder.withValues(alpha: 0.6)),
+                          Container(
+                            width: 20,
+                            height: 1,
+                            color: goldBorder.withValues(alpha: 0.6),
+                          ),
                         ],
                       ),
                     ],
@@ -283,7 +310,8 @@ class VerticalBookPage extends StatelessWidget {
       return PageStyle.spacedWithBackgroundNoBottomPhotos;
     }
     if (pageData?.bottomPhotoStyle == BottomPhotoStyle.threeCircular ||
-        (pageData?.bottomPhotos != null && pageData!.bottomPhotos!.isNotEmpty)) {
+        (pageData?.bottomPhotos != null &&
+            pageData!.bottomPhotos!.isNotEmpty)) {
       return PageStyle.threeCircularBottom;
     }
     return PageStyle.singleLargeBottom;
@@ -340,7 +368,9 @@ class VerticalBookPage extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             _buildLargeBottomPhoto(
-              imagePath: pageData?.largeBottomPhotoPath ?? _getDefaultLargeBottomPhoto(),
+              imagePath:
+                  pageData?.largeBottomPhotoPath ??
+                  _getDefaultLargeBottomPhoto(),
               photoTitle: pageData?.largeBottomPhotoTitle,
               goldBorder: goldBorder,
               height: 110,
@@ -431,95 +461,86 @@ class VerticalBookPage extends StatelessWidget {
     required Color descColor,
     required Color goldBorder,
   }) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: products.map((prod) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    prod.name.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      color: textColor,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withValues(alpha: 0.95),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return CustomPaint(
-                          size: Size(constraints.maxWidth, 8),
-                          painter: _DottedLinePainter(
-                            color: goldBorder.withValues(alpha: 0.45),
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: products.map((prod) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4.0,
+                  horizontal: 2.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            prod.name.toUpperCase(),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              color: textColor,
+                              fontSize: 18.75,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withValues(alpha: 0.95),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    prod.price,
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      color: priceColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.4,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withValues(alpha: 0.95),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
+                        ),
+                        const SizedBox(width: 8),
+                        _MenuPrice(
+                          value: prod.price,
+                          color: priceColor,
+                          fontSize: 15,
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-              if (prod.description != null && prod.description!.trim().isNotEmpty && !prod.description!.startsWith('[SEC:')) ...[
-                const SizedBox(height: 2),
-                Text(
-                  prod.description!,
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    color: descColor,
-                    fontSize: 9.5,
-                    fontStyle: FontStyle.italic,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withValues(alpha: 0.9),
-                        blurRadius: 3,
-                        offset: const Offset(0, 1),
+                    if (prod.description != null &&
+                        prod.description!.trim().isNotEmpty &&
+                        !prod.description!.startsWith('[SEC:')) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        prod.description!,
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          color: descColor,
+                          fontSize: 9.5,
+                          fontStyle: FontStyle.italic,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withValues(alpha: 0.9),
+                              blurRadius: 3,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  ],
                 ),
-              ],
-            ],
+              );
+            }).toList(),
           ),
-        );
-      }).toList(),
+        ),
+      ),
     );
   }
 
@@ -534,157 +555,144 @@ class VerticalBookPage extends StatelessWidget {
     // Regrouper par section tout en préservant l'ordre d'insertion
     final Map<String, List<Product>> grouped = {};
     for (final prod in products) {
-      final sec = prod.section?.trim().isNotEmpty == true ? prod.section!.trim() : 'Café';
+      final sec = prod.section?.trim().isNotEmpty == true
+          ? prod.section!.trim()
+          : 'Café';
       grouped.putIfAbsent(sec, () => []).add(prod);
     }
 
     final sectionKeys = grouped.keys.toList();
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: sectionKeys.map((sectionName) {
-        final secProducts = grouped[sectionName] ?? [];
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ── Titre de section stylé avec double trait doré ──
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2.0),
-              child: Row(
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: sectionKeys.map((sectionName) {
+              final secProducts = grouped[sectionName] ?? [];
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 14,
-                    height: 1,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          goldBorder.withValues(alpha: 0.7),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Container(
-                    width: 3.5,
-                    height: 3.5,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: goldBorder,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    sectionName.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: 'Svetze',
-                      color: goldBorder,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.4,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withValues(alpha: 0.9),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
+                  // ── Titre de section stylé avec double trait doré ──
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 14,
+                          height: 1,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                goldBorder.withValues(alpha: 0.7),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Container(
+                          width: 3.5,
+                          height: 3.5,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: goldBorder,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          sectionName.toUpperCase(),
+                          style: TextStyle(
+                            fontFamily: 'Svetze',
+                            color: goldBorder,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.4,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.9),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 3.5,
+                          height: 3.5,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: goldBorder,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Container(
+                            height: 1,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  goldBorder.withValues(alpha: 0.7),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 3.5,
-                    height: 3.5,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: goldBorder,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Container(
-                      height: 1,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            goldBorder.withValues(alpha: 0.7),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 1.5),
+                  const SizedBox(height: 1.5),
 
-            // ── Liste des produits de la section ──
-            ...secProducts.map((prod) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 1.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      prod.name,
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        color: textColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.9),
-                            blurRadius: 3,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          // Ligne pointillée dorée
-                          return CustomPaint(
-                            size: Size(constraints.maxWidth, 8),
-                            painter: _DottedLinePainter(
-                              color: goldBorder.withValues(alpha: 0.38),
+                  // ── Liste des produits de la section ──
+                  ...secProducts.map((prod) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 1.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              prod.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Montserrat',
+                                color: textColor,
+                                fontSize: 16.5,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withValues(alpha: 0.9),
+                                    blurRadius: 3,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      prod.price,
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        color: priceColor,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.3,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.9),
-                            blurRadius: 3,
-                            offset: const Offset(0, 1),
+                          ),
+                          const SizedBox(width: 8),
+                          _MenuPrice(
+                            value: prod.price,
+                            color: priceColor,
+                            fontSize: 11.5,
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+                    );
+                  }),
+                ],
               );
-            }),
-          ],
-        );
-      }).toList(),
+            }).toList(),
+          ),
+        ),
+      ),
     );
   }
 
@@ -696,74 +704,77 @@ class VerticalBookPage extends StatelessWidget {
     required Color descColor,
     required Color goldBorder,
   }) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: products.map((prod) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2.0),
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Expanded(
-                    child: Text(
-                      prod.name.toUpperCase(),
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        color: textColor,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.4,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: products.map((prod) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            prod.name.toUpperCase(),
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              color: textColor,
+                              fontSize: 17.25,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.4,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        // Points de séparation dorés
+                        Text(
+                          ' ......... ',
+                          style: TextStyle(
+                            color: goldBorder.withValues(alpha: 0.45),
+                            fontSize: 9.5,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        _MenuPrice(
+                          value: prod.price,
+                          color: priceColor,
+                          fontSize: 14,
+                        ),
+                      ],
+                    ),
+                    if (prod.description != null &&
+                        prod.description!.isNotEmpty) ...[
+                      const SizedBox(height: 1.0),
+                      Text(
+                        prod.description!,
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          color: descColor,
+                          fontSize: 9.2,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  // Points de séparation dorés
-                  Text(
-                    ' ......... ',
-                    style: TextStyle(
-                      color: goldBorder.withValues(alpha: 0.45),
-                      fontSize: 9.5,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    prod.price,
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      color: priceColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                ],
-              ),
-              if (prod.description != null && prod.description!.isNotEmpty) ...[
-                const SizedBox(height: 1.0),
-                Text(
-                  prod.description!,
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    color: descColor,
-                    fontSize: 9.2,
-                    fontStyle: FontStyle.italic,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                    ],
+                  ],
                 ),
-              ],
-            ],
+              );
+            }).toList(),
           ),
-        );
-      }).toList(),
+        ),
+      ),
     );
   }
 
@@ -779,12 +790,14 @@ class VerticalBookPage extends StatelessWidget {
     final Product? prod1 = products.isNotEmpty ? products[0] : null;
     final Product? prod2 = products.length > 1 ? products[1] : null;
 
-    final String photo1 = pageData?.firstAlternatingPhotoPath ??
+    final String photo1 =
+        pageData?.firstAlternatingPhotoPath ??
         pageData?.largeBottomPhotoPath ??
         _getDefaultLargeBottomPhoto();
     final String? title1 = pageData?.firstAlternatingPhotoTitle;
 
-    final String photo2 = pageData?.secondAlternatingPhotoPath ??
+    final String photo2 =
+        pageData?.secondAlternatingPhotoPath ??
         pageData?.secondBottomPhotoPath ??
         _getDefaultCornerPhoto();
     final String? title2 = pageData?.secondAlternatingPhotoTitle;
@@ -853,7 +866,7 @@ class VerticalBookPage extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'Montserrat',
                   color: textColor,
-                  fontSize: 14,
+                  fontSize: 21,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.8,
                   shadows: [
@@ -864,36 +877,12 @@ class VerticalBookPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 6),
-            Text(
-              ' ......... ',
-              style: TextStyle(
-                color: goldBorder.withValues(alpha: 0.55),
-                fontSize: 11,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              prod.price,
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                color: priceColor,
-                fontSize: 14.5,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.5,
-                shadows: [
-                  Shadow(
-                    color: Colors.black.withValues(alpha: 0.9),
-                    offset: const Offset(0, 1),
-                    blurRadius: 3,
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(width: 8),
+            _MenuPrice(value: prod.price, color: priceColor, fontSize: 18),
           ],
         ),
         if (prod.description != null && prod.description!.isNotEmpty) ...[
@@ -923,106 +912,115 @@ class VerticalBookPage extends StatelessWidget {
     required Color descColor,
     required Color goldBorder,
   }) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: products.map((prod) {
-        final bool hasThumb = prod.imagePath != null && prod.imagePath!.isNotEmpty;
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2.0),
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Nom du produit
-                  Expanded(
-                    child: Text(
-                      prod.name.toUpperCase(),
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        color: textColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.4,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: products.map((prod) {
+              final bool hasThumb =
+                  prod.imagePath != null && prod.imagePath!.isNotEmpty;
 
-                  // Vignette photo miniature dorée intégrée si présente
-                  if (hasThumb) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: goldBorder, width: 1.1),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.4),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: AppCachedImage(
-                          imagePath: prod.imagePath!,
-                          fit: BoxFit.cover,
-                          placeholder: Container(
-                            color: AppColors.surfaceDark,
-                            child: const Icon(Icons.star, size: 12, color: AppColors.gold),
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Nom du produit
+                        Expanded(
+                          child: Text(
+                            prod.name.toUpperCase(),
+                            style: TextStyle(
+                              fontFamily: 'Montserrat',
+                              color: textColor,
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.4,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ),
-                    ),
-                  ],
 
-                  const SizedBox(width: 4),
-                  // Points de séparation
-                  Text(
-                    ' .... ',
-                    style: TextStyle(
-                      color: goldBorder.withValues(alpha: 0.45),
-                      fontSize: 9.5,
+                        // Vignette photo miniature dorée intégrée si présente
+                        if (hasThumb) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 26,
+                            height: 26,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: goldBorder, width: 1.1),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.4),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(5),
+                              child: AppCachedImage(
+                                imagePath: prod.imagePath!,
+                                fit: BoxFit.cover,
+                                placeholder: Container(
+                                  color: AppColors.surfaceDark,
+                                  child: const Icon(
+                                    Icons.star,
+                                    size: 12,
+                                    color: AppColors.gold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(width: 4),
+                        // Points de séparation
+                        Text(
+                          ' .... ',
+                          style: TextStyle(
+                            color: goldBorder.withValues(alpha: 0.45),
+                            fontSize: 9.5,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        _MenuPrice(
+                          value: prod.price,
+                          color: priceColor,
+                          fontSize: 11.5,
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    prod.price,
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      color: priceColor,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              if (prod.description != null && prod.description!.isNotEmpty) ...[
-                const SizedBox(height: 1),
-                Text(
-                  prod.description!,
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    color: descColor,
-                    fontSize: 8.8,
-                    fontStyle: FontStyle.italic,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                    if (prod.description != null &&
+                        prod.description!.isNotEmpty) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        prod.description!,
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
+                          color: descColor,
+                          fontSize: 8.8,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ],
+              );
+            }).toList(),
           ),
-        );
-      }).toList(),
+        ),
+      ),
     );
   }
 
@@ -1031,10 +1029,12 @@ class VerticalBookPage extends StatelessWidget {
     required BookPage? pageData,
     required Color goldBorder,
   }) {
-    final String photo1 = pageData?.largeBottomPhotoPath ?? _getDefaultLargeBottomPhoto();
+    final String photo1 =
+        pageData?.largeBottomPhotoPath ?? _getDefaultLargeBottomPhoto();
     final String? title1 = pageData?.largeBottomPhotoTitle;
 
-    final String photo2 = pageData?.secondBottomPhotoPath ?? _getDefaultCornerPhoto();
+    final String photo2 =
+        pageData?.secondBottomPhotoPath ?? _getDefaultCornerPhoto();
     final String? title2 = pageData?.secondBottomPhotoTitle;
 
     return Column(
@@ -1044,12 +1044,24 @@ class VerticalBookPage extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(width: 32, height: 0.8, color: goldBorder.withValues(alpha: 0.55)),
+            Container(
+              width: 32,
+              height: 0.8,
+              color: goldBorder.withValues(alpha: 0.55),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 5),
-              child: Icon(Icons.diamond_outlined, size: 6.5, color: goldBorder.withValues(alpha: 0.85)),
+              child: Icon(
+                Icons.diamond_outlined,
+                size: 6.5,
+                color: goldBorder.withValues(alpha: 0.85),
+              ),
             ),
-            Container(width: 32, height: 0.8, color: goldBorder.withValues(alpha: 0.55)),
+            Container(
+              width: 32,
+              height: 0.8,
+              color: goldBorder.withValues(alpha: 0.55),
+            ),
           ],
         ),
         const SizedBox(height: 5),
@@ -1090,7 +1102,10 @@ class VerticalBookPage extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: goldBorder.withValues(alpha: 0.85), width: 1.1),
+        border: Border.all(
+          color: goldBorder.withValues(alpha: 0.85),
+          width: 1.1,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.45),
@@ -1103,12 +1118,7 @@ class VerticalBookPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(7),
         child: Stack(
           fit: StackFit.expand,
-          children: [
-            AppCachedImage(
-              imagePath: imagePath,
-              fit: BoxFit.cover,
-            ),
-          ],
+          children: [AppCachedImage(imagePath: imagePath, fit: BoxFit.cover)],
         ),
       ),
     );
@@ -1119,7 +1129,8 @@ class VerticalBookPage extends StatelessWidget {
     required BookPage? pageData,
     required Color goldBorder,
   }) {
-    final String imagePath = pageData?.cornerPhotoPath ?? _getDefaultCornerPhoto();
+    final String imagePath =
+        pageData?.cornerPhotoPath ?? _getDefaultCornerPhoto();
 
     return Stack(
       alignment: Alignment.center,
@@ -1151,10 +1162,7 @@ class VerticalBookPage extends StatelessWidget {
             ],
           ),
           child: ClipOval(
-            child: AppCachedImage(
-              imagePath: imagePath,
-              fit: BoxFit.cover,
-            ),
+            child: AppCachedImage(imagePath: imagePath, fit: BoxFit.cover),
           ),
         ),
       ],
@@ -1179,12 +1187,24 @@ class VerticalBookPage extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(width: 32, height: 0.8, color: goldBorder.withValues(alpha: 0.55)),
+            Container(
+              width: 32,
+              height: 0.8,
+              color: goldBorder.withValues(alpha: 0.55),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 5),
-              child: Icon(Icons.diamond_outlined, size: 6.5, color: goldBorder.withValues(alpha: 0.85)),
+              child: Icon(
+                Icons.diamond_outlined,
+                size: 6.5,
+                color: goldBorder.withValues(alpha: 0.85),
+              ),
             ),
-            Container(width: 32, height: 0.8, color: goldBorder.withValues(alpha: 0.55)),
+            Container(
+              width: 32,
+              height: 0.8,
+              color: goldBorder.withValues(alpha: 0.55),
+            ),
           ],
         ),
         const SizedBox(height: 5),
@@ -1195,7 +1215,10 @@ class VerticalBookPage extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: goldBorder.withValues(alpha: 0.85), width: 1.2),
+            border: Border.all(
+              color: goldBorder.withValues(alpha: 0.85),
+              width: 1.2,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.5),
@@ -1214,10 +1237,7 @@ class VerticalBookPage extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                AppCachedImage(
-                  imagePath: imagePath,
-                  fit: BoxFit.cover,
-                ),
+                AppCachedImage(imagePath: imagePath, fit: BoxFit.cover),
 
                 Positioned.fill(
                   child: DecoratedBox(
@@ -1269,7 +1289,8 @@ class VerticalBookPage extends StatelessWidget {
     required Color textColor,
     required Color priceColor,
   }) {
-    final List<BottomPhoto> photos = pageData?.bottomPhotos ?? _getDefaultBottomPhotos();
+    final List<BottomPhoto> photos =
+        pageData?.bottomPhotos ?? _getDefaultBottomPhotos();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1278,12 +1299,24 @@ class VerticalBookPage extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(width: 32, height: 0.8, color: goldBorder.withValues(alpha: 0.55)),
+            Container(
+              width: 32,
+              height: 0.8,
+              color: goldBorder.withValues(alpha: 0.55),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 5),
-              child: Icon(Icons.diamond_outlined, size: 6.5, color: goldBorder.withValues(alpha: 0.85)),
+              child: Icon(
+                Icons.diamond_outlined,
+                size: 6.5,
+                color: goldBorder.withValues(alpha: 0.85),
+              ),
             ),
-            Container(width: 32, height: 0.8, color: goldBorder.withValues(alpha: 0.55)),
+            Container(
+              width: 32,
+              height: 0.8,
+              color: goldBorder.withValues(alpha: 0.55),
+            ),
           ],
         ),
         const SizedBox(height: 5),
@@ -1327,10 +1360,16 @@ class VerticalBookPage extends StatelessWidget {
                 const SizedBox(height: 4),
                 // Capsule dorée pour le nom
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: goldBorder.withValues(alpha: 0.7), width: 0.8),
+                    border: Border.all(
+                      color: goldBorder.withValues(alpha: 0.7),
+                      width: 0.8,
+                    ),
                     color: const Color(0xFF18181C),
                   ),
                   child: Text(
@@ -1346,15 +1385,10 @@ class VerticalBookPage extends StatelessWidget {
                 ),
                 if (item.price != null && item.price!.isNotEmpty) ...[
                   const SizedBox(height: 1.5),
-                  Text(
-                    item.price!,
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      color: priceColor,
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.3,
-                    ),
+                  _MenuPrice(
+                    value: item.price!,
+                    color: priceColor,
+                    fontSize: 9.5,
                   ),
                 ],
               ],
@@ -1367,9 +1401,21 @@ class VerticalBookPage extends StatelessWidget {
 
   List<BottomPhoto> _getDefaultBottomPhotos() {
     return const [
-      BottomPhoto(title: 'MECHOUIA', price: '16 DT', imagePath: 'assets/restaurant/mechouia.jpg'),
-      BottomPhoto(title: 'CÉSAR ROYAL', price: '22 DT', imagePath: 'assets/restaurant/salade.jfif'),
-      BottomPhoto(title: 'TUNISIENNE', price: '14 DT', imagePath: 'assets/restaurant/mechouia.jpg'),
+      BottomPhoto(
+        title: 'MECHOUIA',
+        price: '16 DT',
+        imagePath: 'assets/restaurant/mechouia.jpg',
+      ),
+      BottomPhoto(
+        title: 'CÉSAR ROYAL',
+        price: '22 DT',
+        imagePath: 'assets/restaurant/salade.jfif',
+      ),
+      BottomPhoto(
+        title: 'TUNISIENNE',
+        price: '14 DT',
+        imagePath: 'assets/restaurant/mechouia.jpg',
+      ),
     ];
   }
 }
@@ -1416,31 +1462,6 @@ class MoonCrescentPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Peintre pour la ligne pointillée reliant le produit au prix
-class _DottedLinePainter extends CustomPainter {
-  final Color color;
-
-  _DottedLinePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.0;
-
-    const double dotRadius = 0.9;
-    const double step = 4.5;
-    final double y = size.height / 2;
-
-    for (double x = 2; x < size.width - 2; x += step) {
-      canvas.drawCircle(Offset(x, y), dotRadius, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 // Peintre pour la double bordure festonnée
 class VerticalPageBorderPainter extends CustomPainter {
   final Color borderColor;
@@ -1473,4 +1494,70 @@ class VerticalPageBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _MenuPrice extends StatelessWidget {
+  final String value;
+  final Color color;
+  final double fontSize;
+
+  const _MenuPrice({
+    required this.value,
+    required this.color,
+    required this.fontSize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final match = RegExp(
+      r'^\s*(\d[\d.,\s]*?)(?:\s*(?:TND|DT))?\s*$',
+      caseSensitive: false,
+    ).firstMatch(value);
+    final amount = match?.group(1)?.trim() ?? value;
+    final gold = Color.lerp(color, const Color(0xFFFFD274), 0.55)!;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          amount,
+          maxLines: 1,
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            color: gold,
+            fontSize: fontSize,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.15,
+          ),
+        ),
+        if (match != null) ...[
+          SizedBox(width: fontSize * 0.25),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: fontSize * 0.25,
+              vertical: fontSize * 0.08,
+            ),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: gold.withValues(alpha: 0.8),
+                width: 0.7,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'TND',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                color: Colors.white,
+                fontSize: fontSize * 0.48,
+                height: 1,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }

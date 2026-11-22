@@ -128,7 +128,8 @@ class VerticalBookFlipViewState extends State<VerticalBookFlipView>
     if (!_isDragging) return;
     final velocity = details.primaryVelocity ?? 0;
 
-    final bool shouldCommit = _dragProgress > 0.28 ||
+    final bool shouldCommit =
+        _dragProgress > 0.28 ||
         (_isForward && velocity < -200) ||
         (!_isForward && velocity > 200);
 
@@ -153,19 +154,12 @@ class VerticalBookFlipViewState extends State<VerticalBookFlipView>
         final double maxW = constraints.maxWidth;
         final double maxH = constraints.maxHeight;
 
-        const double targetRatio = 1.48;
-        double bookHeight = (maxH - 2).clamp(340.0, 950.0);
-        double bookWidth = bookHeight / targetRatio;
-
-        if (bookWidth > maxW - 4) {
-          bookWidth = maxW - 4;
-          bookHeight = bookWidth * targetRatio;
-        }
-
-        if (bookHeight > maxH - 2) {
-          bookHeight = maxH - 2;
-          bookWidth = bookHeight / targetRatio;
-        }
+        const double baseRatio = 1.48;
+        final double targetRatio = maxW > 0
+            ? min(baseRatio * 1.21, max(baseRatio, maxH / maxW))
+            : baseRatio;
+        final double bookWidth = max(0.0, min(maxW, maxH / targetRatio));
+        final double bookHeight = bookWidth * targetRatio;
 
         return Center(
           child: SizedBox(
@@ -188,7 +182,12 @@ class VerticalBookFlipViewState extends State<VerticalBookFlipView>
                     turnProgress = 0.0;
                   }
 
-                  return _build3DCurlFlip(bookWidth, bookHeight, turnProgress);
+                  return _build3DCurlFlip(
+                    bookWidth,
+                    bookHeight,
+                    turnProgress,
+                    targetRatio,
+                  );
                 },
               ),
             ),
@@ -201,12 +200,17 @@ class VerticalBookFlipViewState extends State<VerticalBookFlipView>
   // ===========================================================================
   // ── MOTEUR DE PLIAGE & ENROULEMENT DE PAGE (VERS L'EXTÉRIEUR, LA PAGE SE PLIE) ──
   // ===========================================================================
-  Widget _build3DCurlFlip(double width, double height, double progress) {
+  Widget _build3DCurlFlip(
+    double width,
+    double height,
+    double progress,
+    double pageRatio,
+  ) {
     final bool isAnimating = (_isFlipping || _isDragging) && progress > 0.001;
 
     // Si aucune animation, on affiche la page actuelle normalement à plat
     if (!isAnimating) {
-      return _buildPageWidget(_currentPage);
+      return _buildPageWidget(_currentPage, pageRatio);
     }
 
     final int targetPageIndex = _isForward
@@ -214,16 +218,16 @@ class VerticalBookFlipViewState extends State<VerticalBookFlipView>
         : (_currentPage - 1).clamp(0, pageCount - 1);
 
     final bool isLight = widget.book.color.computeLuminance() > 0.5;
-    final Color goldBorder = isLight ? const Color(0xFFB3894C) : const Color(0xFFCCA16C);
+    final Color goldBorder = isLight
+        ? const Color(0xFFB3894C)
+        : const Color(0xFFCCA16C);
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
         // ── 1. LA PAGE DE DESSOUS RÉVÉLÉE ───────────────────────────────────
         // Dévoilée au fur et à mesure que la feuille se soulève et se plie
-        Positioned.fill(
-          child: _buildPageWidget(targetPageIndex),
-        ),
+        Positioned.fill(child: _buildPageWidget(targetPageIndex, pageRatio)),
 
         // ── 2. LA PAGE COURANTE DÉCOUPÉE LE LONG DU PLI COURBE ──────────────
         // La partie non encore pliée reste visible à gauche
@@ -233,7 +237,7 @@ class VerticalBookFlipViewState extends State<VerticalBookFlipView>
               turnProgress: progress,
               isForward: _isForward,
             ),
-            child: _buildPageWidget(_currentPage),
+            child: _buildPageWidget(_currentPage, pageRatio),
           ),
         ),
 
@@ -243,7 +247,11 @@ class VerticalBookFlipViewState extends State<VerticalBookFlipView>
           child: Transform(
             alignment: Alignment.center,
             transform: Matrix4.identity()
-              ..setEntry(3, 2, -0.0008) // Perspective 3D orientée vers l'EXTÉRIEUR (vers les yeux)
+              ..setEntry(
+                3,
+                2,
+                -0.0008,
+              ) // Perspective 3D orientée vers l'EXTÉRIEUR (vers les yeux)
               ..scaleByDouble(
                 1.0 + 0.035 * sin(progress * pi),
                 1.0 + 0.035 * sin(progress * pi),
@@ -264,12 +272,18 @@ class VerticalBookFlipViewState extends State<VerticalBookFlipView>
     );
   }
 
-  Widget _buildPageWidget(int index) {
-    return VerticalBookPage(
-      book: widget.book,
-      pageIndex: index,
-      totalPages: pageCount,
+  Widget _buildPageWidget(int index, double pageRatio) {
+    return FittedBox(
+      fit: BoxFit.fill,
+      child: SizedBox(
+        width: 390,
+        height: 390 * pageRatio,
+        child: VerticalBookPage(
+          book: widget.book,
+          pageIndex: index,
+          totalPages: pageCount,
+        ),
+      ),
     );
   }
 }
-

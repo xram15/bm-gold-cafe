@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,6 +21,8 @@ class SupabaseService {
 
   bool _isConfigured = false;
   bool get isConfigured => _isConfigured;
+  StreamSubscription<List<Map<String, dynamic>>>? _menuSubscription;
+  Timer? _menuRefreshTimer;
 
   // Notifier pour mettre à jour le livre en direct partout dans l'application
   final ValueNotifier<Book> currentBookNotifier = ValueNotifier<Book>(bmMenu);
@@ -448,7 +451,7 @@ class SupabaseService {
       }
 
       final List<BookPage> updatedPages = [];
-      for (final page in bmMenu.pages) {
+      for (final page in currentBook.pages) {
         final String catTitle = (page.category?.title ?? '').trim().toUpperCase();
         final dynamicProducts = grouped[catTitle];
 
@@ -469,16 +472,32 @@ class SupabaseService {
   }
 
   void _subscribeToRealtimeChanges() {
-    if (!_isConfigured || _client == null) return;
+    if (!_isConfigured || _client == null || _menuSubscription != null || _menuRefreshTimer != null) return;
 
     try {
-      _client!
+      _menuSubscription = _client!
           .from('products')
           .stream(primaryKey: ['id'])
-          .listen((_) => fetchMenu(), onError: (e) => debugPrint('[Realtime] $e'));
+          .listen(
+            (_) => fetchMenu(),
+            onError: (Object error) {
+              debugPrint('[Menu] Mises à jour en direct indisponibles; actualisation périodique activée.');
+              unawaited(_menuSubscription?.cancel());
+              _menuSubscription = null;
+              _startMenuPolling();
+            },
+            onDone: _startMenuPolling,
+          );
     } catch (e) {
-      debugPrint('[Realtime] stream: $e');
+      debugPrint('[Menu] Mises à jour en direct indisponibles; actualisation périodique activée.');
+      _startMenuPolling();
     }
+  }
+
+  void _startMenuPolling() {
+    _menuRefreshTimer ??= Timer.periodic(const Duration(seconds: 30), (_) {
+      unawaited(fetchMenu());
+    });
   }
 
   void _updateBook(List<BookPage> pages) {

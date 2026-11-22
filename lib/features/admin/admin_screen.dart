@@ -9,6 +9,9 @@ import '../../core/app_colors.dart';
 import '../../data/models/page_model.dart';
 import '../../data/models/product_model.dart';
 import '../../services/supabase_service.dart';
+import '../../shared/widgets/app_cached_image.dart';
+import '../book/book_screen.dart';
+import 'reservations_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -428,242 +431,116 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
     return ValueListenableBuilder(
       valueListenable: _service.currentBookNotifier,
       builder: (context, book, child) {
-        final int totalPages = book.pages.length;
-        if (_selectedPageIndex >= totalPages) {
-          _selectedPageIndex = 0;
-        }
-
-        final BookPage currentPage = book.pages[_selectedPageIndex];
-        final String pageTitle = currentPage.category?.title ?? 'PAGE ${_selectedPageIndex + 1}';
-
+        if (_selectedPageIndex >= book.pages.length) _selectedPageIndex = 0;
+        final page = book.pages[_selectedPageIndex];
+        final title = page.category?.title ?? 'PAGE ${_selectedPageIndex + 1}';
         return Container(
-          color: const Color(0xFF787569), // Fond #787569
-          child: Column(
-            children: [
-              // BARRE SUPÉRIEURE NAVBAR #C9C5B1
-              _buildTopHeader(),
-
-              // SÉLECTEUR DE ZONE : [ 🍽️ PRODUITS & PRIX ] vs [ 🖼️ PHOTOS DU LIVRE ]
-              _buildZoneSelector(),
-
-              // SÉLECTEUR DE PAGE DU LIVRE (PAGE 1, PAGE 2, PAGE 3... SANS "TOUS")
-              _buildPageTabs(book.pages),
-
-              // CONTENU DE LA ZONE SÉLECTIONNÉE
-              Expanded(
-                child: _currentZoneIndex == 0
-                    ? _buildProductsZone(currentPage, pageTitle)
-                    : _buildPhotosZone(currentPage, pageTitle),
-              ),
-            ],
+          color: const Color(0xFFF2F3F8),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Column(children: [
+                _buildTopHeader(),
+                _buildZoneSelector(),
+                _buildPageTabs(book.pages),
+                Expanded(child: _currentZoneIndex == 0 ? _buildProductsZone(page, title) : _buildPhotosZone(page, title)),
+                _buildBottomNavigation(),
+              ]),
+            ),
           ),
         );
       },
     );
   }
 
-  // ===========================================================================
-  // COMPOSANTS DU DASHBOARD
-  // ===========================================================================
-
   Widget _buildTopHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Color(0xFFC9C5B1), // Navbar #C9C5B1
-        border: Border(bottom: BorderSide(color: Color(0xFFB5B099))),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
-            onPressed: () => Navigator.pop(context),
-            tooltip: 'Fermer',
-          ),
-          const Spacer(),
-
-          // Bouton Enregistrer
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1E3A2F), // Vert foncé luxueux
-              foregroundColor: Colors.white,
-              elevation: 1,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            icon: _isSaving
-                ? const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Icon(Icons.save_rounded, size: 16, color: Colors.white),
-            label: Text(
-              _isSaving ? 'En cours...' : 'Enregistrer',
-              style: const TextStyle(
-                fontFamily: 'Montserrat',
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-            onPressed: _isSaving ? null : _handleManualSave,
-          ),
-          const SizedBox(width: 8),
-
-          // Bouton Admin en noir et texte en blanc
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            icon: const Icon(Icons.manage_accounts_rounded, size: 16, color: Colors.white),
-            label: const Text(
-              'Admin',
-              style: TextStyle(
-                fontFamily: 'Montserrat',
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-            onPressed: _showAdminManagementDialog,
-          ),
-          const SizedBox(width: 8),
-
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.black87, size: 20),
-            tooltip: 'Quitter',
-            onPressed: () async {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 16, 0),
+      child: Row(children: [
+        const Icon(Icons.workspace_premium, size: 32, color: Color(0xFFC89A3B)),
+        const SizedBox(width: 9),
+        const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('BM GOLD', style: TextStyle(fontFamily: 'Svetze', fontSize: 19, color: Color(0xFF171717))),
+          Text('L’ÉTHIQUE DU CAFÉ', style: TextStyle(fontSize: 7, letterSpacing: 1.2, color: Color(0xFF555967))),
+        ])),
+        IconButton(
+          tooltip: 'Enregistrer',
+          onPressed: _isSaving ? null : _handleManualSave,
+          icon: _isSaving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.save_outlined, size: 22),
+        ),
+        PopupMenuButton<String>(
+          tooltip: 'Compte administrateur',
+          icon: const CircleAvatar(radius: 16, backgroundColor: Color(0xFFE4E5E9), child: Icon(Icons.person, size: 18, color: Color(0xFF252936))),
+          onSelected: (value) async {
+            if (value == 'admin') _showAdminManagementDialog();
+            if (value == 'preview') {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => BookScreen(book: _service.currentBook)));
+            }
+            if (value == 'logout') {
               await _service.signOut();
               if (mounted) setState(() {});
-            },
-          ),
-        ],
-      ),
+            }
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem(value: 'preview', child: Text('Aperçu du menu')),
+            PopupMenuItem(value: 'admin', child: Text('Administration')),
+            PopupMenuItem(value: 'logout', child: Text('Déconnexion')),
+          ],
+        ),
+      ]),
     );
   }
 
   Widget _buildZoneSelector() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      margin: const EdgeInsets.fromLTRB(20, 20, 20, 10),
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1B1B22),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Row(
-        children: [
-          // Onglet 1 : Produits & Prix
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _currentZoneIndex = 0),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                decoration: BoxDecoration(
-                  color: _currentZoneIndex == 0 ? AppColors.gold : Colors.transparent,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.restaurant_menu_rounded,
-                      size: 16,
-                      color: _currentZoneIndex == 0 ? Colors.black : Colors.white70,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'PRODUITS & PRIX',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: _currentZoneIndex == 0 ? Colors.black : Colors.white70,
-                        letterSpacing: 0.6,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Onglet 2 : Photos du Livre
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _currentZoneIndex = 1),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                decoration: BoxDecoration(
-                  color: _currentZoneIndex == 1 ? AppColors.gold : Colors.transparent,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.photo_library_outlined,
-                      size: 16,
-                      color: _currentZoneIndex == 1 ? Colors.black : Colors.white70,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'PHOTOS DU LIVRE',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: _currentZoneIndex == 1 ? Colors.black : Colors.white70,
-                        letterSpacing: 0.6,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: .65), borderRadius: BorderRadius.circular(12)),
+      child: Row(children: [
+        _zoneTab(0, Icons.restaurant_menu, 'Produits & Prix'),
+        _zoneTab(1, Icons.image_outlined, 'Photos du livre'),
+      ]),
     );
   }
 
+  Widget _zoneTab(int index, IconData icon, String label) {
+    final selected = _currentZoneIndex == index;
+    return Expanded(child: InkWell(
+      borderRadius: BorderRadius.circular(9),
+      onTap: () => setState(() => _currentZoneIndex = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        decoration: BoxDecoration(color: selected ? const Color(0xFF222222) : Colors.transparent, borderRadius: BorderRadius.circular(9)),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon, size: 16, color: selected ? Colors.white : const Color(0xFF373B45)),
+          const SizedBox(width: 7),
+          Flexible(child: Text(label, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: selected ? Colors.white : const Color(0xFF252833)))),
+        ]),
+      ),
+    ));
+  }
+
   Widget _buildPageTabs(List<BookPage> pages) {
-    return Container(
-      height: 44,
-      margin: const EdgeInsets.only(bottom: 6),
+    return SizedBox(
+      height: 48,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: pages.length,
         itemBuilder: (context, index) {
-          final isSelected = _selectedPageIndex == index;
-          final catTitle = pages[index].category?.title ?? 'PAGE ${index + 1}';
-
+          final selected = _selectedPageIndex == index;
+          final title = pages[index].category?.title ?? 'PAGE ${index + 1}';
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
             child: ChoiceChip(
-              label: Text(
-                'Page ${index + 1} : $catTitle',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                  color: isSelected ? Colors.black : Colors.white70,
-                ),
-              ),
-              selected: isSelected,
-              selectedColor: AppColors.gold,
-              backgroundColor: const Color(0xFF1B1B22),
-              side: BorderSide(
-                color: isSelected ? AppColors.gold : Colors.white12,
-              ),
+              visualDensity: VisualDensity.compact,
+              label: Text('Page ${index + 1} : $title', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF252833))),
+              selected: selected,
+              checkmarkColor: const Color(0xFF8A641D),
+              selectedColor: const Color(0xFFF9F1DE),
+              backgroundColor: const Color(0xFFF8F9FC),
+              side: BorderSide(color: selected ? const Color(0xFFC79A3D) : const Color(0xFFE5E7EB)),
               onSelected: (_) => setState(() => _selectedPageIndex = index),
             ),
           );
@@ -672,199 +549,102 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
     );
   }
 
-  // ===========================================================================
-  // 3. ZONE 1 : GESTION DES PRODUITS DE LA PAGE SÉLECTIONNÉE
-  // ===========================================================================
-
-  Widget _buildProductsZone(BookPage currentPage, String pageTitle) {
-    final List<Product> allProducts = currentPage.category?.products ?? <Product>[];
-
-    return Column(
-      children: [
-        // Carte d'entête de la page active + Bouton Ajouter (SANS BARRE DE RECHERCHE)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Page ${_selectedPageIndex + 1} • $pageTitle',
-                    style: const TextStyle(
-                      fontFamily: 'Montserrat',
-                      color: AppColors.goldLight,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${allProducts.length} produit(s) au menu',
-                    style: const TextStyle(color: Colors.white70, fontSize: 11),
-                  ),
-                ],
-              ),
-
-              // Bouton Ajouter Produit
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.gold,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 2,
-                ),
-                onPressed: () => _showAddProductDialog(pageTitle),
-                icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
-                label: const Text(
-                  'AJOUTER',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ),
-            ],
+  Widget _buildProductsZone(BookPage page, String title) {
+    final products = page.category?.products ?? <Product>[];
+    return Stack(children: [
+      ListView(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: .6), borderRadius: BorderRadius.circular(12)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Page ${_selectedPageIndex + 1} · $title', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF181B25))),
+              const SizedBox(height: 3),
+              Text('${products.length} produit(s) · Affiché dans le livre', style: const TextStyle(fontSize: 10, color: Color(0xFF858A99))),
+            ]),
           ),
-        ),
+          const SizedBox(height: 8),
+          if (products.isEmpty)
+            const Padding(padding: EdgeInsets.symmetric(vertical: 30), child: Center(child: Text('Aucun produit sur cette page.', style: TextStyle(color: Colors.black54, fontSize: 12))))
+          else
+            ...products.map((product) => _buildProductCard(product)),
+        ],
+      ),
+      Positioned(right: 20, bottom: 16, child: ElevatedButton.icon(
+        onPressed: () => _showAddProductDialog(title),
+        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC79A3D), foregroundColor: Colors.white, elevation: 3, padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14), shape: const StadiumBorder()),
+        icon: const Icon(Icons.add, size: 19),
+        label: const Text('Ajouter un produit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+      )),
+    ]);
+  }
 
-        // Liste des produits
-        Expanded(
-          child: allProducts.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.restaurant_menu_rounded, color: Colors.white30, size: 48),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Aucun produit sur la Page ${_selectedPageIndex + 1}.',
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.gold, foregroundColor: Colors.black),
-                        onPressed: () => _showAddProductDialog(pageTitle),
-                        icon: const Icon(Icons.add_rounded),
-                        label: const Text('Ajouter le premier produit'),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: allProducts.length,
-                  itemBuilder: (context, index) {
-                    final prod = allProducts[index];
-                    return _buildProductCard(prod);
-                  },
-                ),
+  Widget _buildProductCard(Product product) {
+    final image = product.imagePath;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: .72), borderRadius: BorderRadius.circular(12)),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(width: 88, height: 96, child: image == null || image.isEmpty
+              ? const ColoredBox(color: Color(0xFFECEEF1), child: Icon(Icons.restaurant_menu, color: Color(0xFF9A9DA5)))
+              : image.startsWith('http') ? Image.network(image, fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.broken_image_outlined))
+              : Image.asset(image, fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.broken_image_outlined))),
         ),
-      ],
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF20232D))),
+          if (product.description != null && product.description!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(product.description!, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: Color(0xFF777D8D))),
+          ],
+          const SizedBox(height: 8),
+          InkWell(onTap: () => _showQuickPriceDialog(product), child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            decoration: BoxDecoration(color: const Color(0xFFF8ECD0), borderRadius: BorderRadius.circular(8)),
+            child: Text(product.price, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF302B20))),
+          )),
+        ])),
+        PopupMenuButton<String>(
+          tooltip: 'Actions du produit', icon: const Icon(Icons.more_horiz, size: 20), padding: EdgeInsets.zero,
+          onSelected: (action) { if (action == 'edit') _showEditProductDialog(product); if (action == 'delete') _showDeleteProductDialog(product); },
+          itemBuilder: (context) => const [PopupMenuItem(value: 'edit', child: Text('Modifier')), PopupMenuItem(value: 'delete', child: Text('Supprimer'))],
+        ),
+      ]),
     );
   }
 
-  Widget _buildProductCard(Product prod) {
+  Widget _buildBottomNavigation() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E26),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => _showEditProductDialog(prod),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Nom & Description (SANS CHAMP PHOTO)
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        prod.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'Montserrat',
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13.5,
-                        ),
-                      ),
-                      if (prod.description != null && prod.description!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          prod.description!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white60, fontSize: 11),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // Prix & Actions (sans débordement)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Prix cliquable
-                    GestureDetector(
-                      onTap: () => _showQuickPriceDialog(prod),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: AppColors.gold.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppColors.gold, width: 0.8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              prod.price,
-                              style: const TextStyle(
-                                fontFamily: 'Montserrat',
-                                color: AppColors.gold,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.edit_rounded, color: AppColors.gold, size: 12),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                      tooltip: 'Supprimer',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => _showDeleteProductDialog(prod),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: const BoxDecoration(color: Color(0xFFFAFAFC), borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+      child: Row(children: [
+        _navigationItem(Icons.home_outlined, 'Accueil', () => Navigator.pop(context)),
+        _navigationItem(Icons.restaurant_menu, 'Menu', () {}, selected: true),
+        _navigationItem(Icons.event_seat_outlined, 'Réservation', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReservationsScreen()))),
+        _navigationItem(Icons.settings_outlined, 'Paramètres', _showAdminManagementDialog),
+      ]),
     );
+  }
+
+  Widget _navigationItem(IconData icon, String label, VoidCallback onTap, {bool selected = false}) {
+    return Expanded(child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(color: selected ? const Color(0xFFF8EED8) : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 20, color: selected ? const Color(0xFFAC7D24) : const Color(0xFF656B79)),
+          const SizedBox(height: 3),
+          Text(label, style: TextStyle(fontSize: 10, color: selected ? const Color(0xFF9C6E1E) : const Color(0xFF626775))),
+        ]),
+      ),
+    ));
   }
 
   // ===========================================================================
@@ -878,21 +658,22 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         // En-tête info
         Container(
           padding: const EdgeInsets.all(12),
-          margin: const EdgeInsets.only(bottom: 14),
+          margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: AppColors.gold.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
+            border: Border.all(color: Colors.transparent),
           ),
           child: Row(
             children: [
               const Icon(Icons.photo_library_outlined, color: AppColors.gold, size: 20),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  'Gestion des visuels de la Page ${_selectedPageIndex + 1} ($pageTitle). Les modifications s\'appliquent immédiatement dans le livre.',
-                  style: const TextStyle(color: AppColors.goldLight, fontSize: 11.5, height: 1.3),
-                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Gestion des visuels de la Page ${_selectedPageIndex + 1}', style: const TextStyle(color: Color(0xFF20232C), fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 3),
+                  const Text('Les modifications s\'appliquent immédiatement dans le livre.', style: TextStyle(color: Color(0xFF777D8D), fontSize: 10)),
+                ]),
               ),
             ],
           ),
@@ -900,8 +681,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
 
         // 1. Photo de coin ("Lune" en haut à droite)
         _buildPhotoSlotCard(
-          title: 'Photo de coin (Coin supérieur droit)',
-          subtitle: 'Affichée en médaillon circulaire ou décoratif',
+          title: 'Photo de coin',
+          subtitle: 'Coin supérieur droit',
           imagePath: currentPage.cornerPhotoPath,
           onEdit: () => _showEditPhotoDialog(
             slotName: 'Photo de coin',
@@ -960,8 +741,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         // 4. Photos alternées (Style 3)
         if (currentPage.firstAlternatingPhotoPath != null)
           _buildPhotoSlotCard(
-            title: '1ère Photo Alternée (Milieu)',
-            subtitle: currentPage.firstAlternatingPhotoTitle ?? 'Photo 1',
+            title: '1ère Photo Alternée',
+            subtitle: 'Milieu',
             imagePath: currentPage.firstAlternatingPhotoPath,
             onEdit: () => _showEditPhotoDialog(
               slotName: '1ère Photo Alternée',
@@ -981,8 +762,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
 
         if (currentPage.secondAlternatingPhotoPath != null)
           _buildPhotoSlotCard(
-            title: '2ème Photo Alternée (Bas)',
-            subtitle: currentPage.secondAlternatingPhotoTitle ?? 'Photo 2',
+            title: '2ème Photo Alternée',
+            subtitle: 'Bas',
             imagePath: currentPage.secondAlternatingPhotoPath,
             onEdit: () => _showEditPhotoDialog(
               slotName: '2ème Photo Alternée',
@@ -1038,89 +819,28 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
     required String? imagePath,
     required VoidCallback onEdit,
   }) {
+    final hasImage = imagePath != null && imagePath.isNotEmpty;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF181820),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Row(
-        children: [
-          // Aperçu Image
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: const Color(0xFF22222C),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(9),
-              child: imagePath != null && imagePath.isNotEmpty
-                  ? (imagePath.startsWith('data:image')
-                      ? Image.memory(
-                          base64Decode(imagePath.substring(imagePath.indexOf(',') + 1)),
-                          fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) => const Icon(Icons.broken_image_rounded, color: Colors.white38),
-                        )
-                      : (imagePath.startsWith('http')
-                          ? Image.network(imagePath, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image_rounded, color: Colors.white38))
-                          : Image.asset(imagePath, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image_rounded, color: Colors.white38))))
-                  : const Icon(Icons.image_not_supported_rounded, color: Colors.white24),
-            ),
-          ),
-          const SizedBox(width: 14),
-
-          // Titre & Sous-titre
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontFamily: 'Montserrat',
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.goldLight, fontSize: 11),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  imagePath ?? 'Aucune photo configurée',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white38, fontSize: 10),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-
-          // Bouton Modifier
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.gold,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_rounded, size: 14),
-            label: const Text('Changer', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(7),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: .72), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE6E8EC))),
+      child: Row(children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(9),
+          child: SizedBox(width: 100, height: 72, child: !hasImage
+              ? const ColoredBox(color: Color(0xFFECEEF1), child: Icon(Icons.image_outlined, color: Colors.black38))
+              : AppCachedImage(imagePath: imagePath, fit: BoxFit.cover, placeholder: const Icon(Icons.broken_image_outlined))),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E212B))),
+          const SizedBox(height: 3),
+          Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: Color(0xFF777D8D))),
+          const SizedBox(height: 5),
+          Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2), decoration: BoxDecoration(color: hasImage ? const Color(0xFFE1F2DF) : const Color(0xFFEEEEEF), borderRadius: BorderRadius.circular(6)), child: Text(hasImage ? '✓ Active' : 'Non configurée', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: hasImage ? const Color(0xFF43814A) : Colors.black54))),
+        ])),
+        IconButton(onPressed: onEdit, tooltip: 'Modifier la photo', icon: const Icon(Icons.edit, size: 17), style: IconButton.styleFrom(backgroundColor: const Color(0xFFF0F1F3), foregroundColor: const Color(0xFF272B35))),
+      ]),
     );
   }
 
