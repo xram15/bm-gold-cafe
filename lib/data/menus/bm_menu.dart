@@ -100,9 +100,11 @@ const Book bmMenu = Book(
     // PAGE 5 : COCKTAILS & MOJITOS
     // -------------------------------------------------------------------------
     BookPage(
-      style: PageStyle.sectionsWithBackground,
+      style: PageStyle.spacedWithBackgroundTwoBottomPhotos,
       cornerPhotoPath: 'assets/restaurant/cafe.png',
       backgroundImagePath: 'assets/coctail-back.jpg',
+      largeBottomPhotoPath: 'assets/restaurant/cat_boissons.png',
+      secondBottomPhotoPath: 'assets/restaurant/cafe.png',
       category: MenuCategory(
         title: 'COCTAILS & MOJITOS',
         products: <Product>[],
@@ -113,9 +115,11 @@ const Book bmMenu = Book(
     // PAGE 6 : CHICHA NORMALE
     // -------------------------------------------------------------------------
     BookPage(
-      style: PageStyle.sectionsWithBackground,
+      style: PageStyle.spacedWithBackgroundTwoBottomPhotos,
       cornerPhotoPath: 'assets/restaurant/cat_shisha.jfif',
       backgroundImagePath: 'assets/chicha-back.jpg',
+      largeBottomPhotoPath: 'assets/restaurant/cat_shisha.jfif',
+      secondBottomPhotoPath: 'assets/restaurant/cat_shisha.jfif',
       category: MenuCategory(
         title: 'CHICHA NORMALE',
         products: <Product>[],
@@ -126,9 +130,11 @@ const Book bmMenu = Book(
     // PAGE 7 : CHICHA QUASAR & SPÉCIALE
     // -------------------------------------------------------------------------
     BookPage(
-      style: PageStyle.sectionsWithBackground,
+      style: PageStyle.spacedWithBackgroundTwoBottomPhotos,
       cornerPhotoPath: 'assets/restaurant/cat_shisha.jfif',
       backgroundImagePath: 'assets/quasar-back.jpg',
+      largeBottomPhotoPath: 'assets/restaurant/cat_shisha.jfif',
+      secondBottomPhotoPath: 'assets/restaurant/cat_shisha.jfif',
       category: MenuCategory(
         title: 'CHICHA QUASAR',
         products: <Product>[],

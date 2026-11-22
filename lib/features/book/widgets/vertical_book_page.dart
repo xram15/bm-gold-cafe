@@ -276,6 +276,9 @@ class VerticalBookPage extends StatelessWidget {
     if (pageData?.style == PageStyle.sectionsWithBackground) {
       return PageStyle.sectionsWithBackground;
     }
+    if (pageData?.style == PageStyle.spacedWithBackgroundTwoBottomPhotos) {
+      return PageStyle.spacedWithBackgroundTwoBottomPhotos;
+    }
     if (pageData?.bottomPhotoStyle == BottomPhotoStyle.threeCircular ||
         (pageData?.bottomPhotos != null && pageData!.bottomPhotos!.isNotEmpty)) {
       return PageStyle.threeCircularBottom;
@@ -383,7 +386,128 @@ class VerticalBookPage extends StatelessWidget {
           descColor: descColor,
           goldBorder: goldBorder,
         );
+
+      // ── STYLE 6 : Produits aérés avec photo de fond + 2 cadres photos en bas ──
+      case PageStyle.spacedWithBackgroundTwoBottomPhotos:
+        return Column(
+          children: [
+            Expanded(
+              child: _buildSpacedProductList(
+                products: products,
+                textColor: textColor,
+                priceColor: priceColor,
+                descColor: descColor,
+                goldBorder: goldBorder,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildTwoBottomPhotosRow(
+              pageData: pageData,
+              goldBorder: goldBorder,
+            ),
+          ],
+        );
     }
+  }
+
+  /// Affiche une liste de produits avec espacement généreux et description lisible
+  Widget _buildSpacedProductList({
+    required List<Product> products,
+    required Color textColor,
+    required Color priceColor,
+    required Color descColor,
+    required Color goldBorder,
+  }) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: products.map((prod) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    prod.name.toUpperCase(),
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      color: textColor,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.95),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return CustomPaint(
+                          size: Size(constraints.maxWidth, 8),
+                          painter: _DottedLinePainter(
+                            color: goldBorder.withValues(alpha: 0.45),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    prod.price,
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      color: priceColor,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.4,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.95),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (prod.description != null && prod.description!.trim().isNotEmpty && !prod.description!.startsWith('[SEC:')) ...[
+                const SizedBox(height: 2),
+                Text(
+                  prod.description!,
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
+                    color: descColor,
+                    fontSize: 9.5,
+                    fontStyle: FontStyle.italic,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.9),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+    );
   }
 
   /// Affiche les produits regroupés par section (ex: Café, Café Spécial, Expresso (LAVAZZA), Chocolat)

@@ -35,6 +35,9 @@ enum PageStyle {
 
   /// STYLE 5 : Multi-sections (types de cafés...) avec photo de fond et SANS photo en bas
   sectionsWithBackground,
+
+  /// STYLE 6 : Produits aérés avec photo d'arrière-plan + 2 cadres photos en bas
+  spacedWithBackgroundTwoBottomPhotos,
 }
 
 enum BottomPhotoStyle {
