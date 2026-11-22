@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:ui';
-import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:universal_html/html.dart' as html;
 import '../../core/app_colors.dart';
 import '../../data/models/page_model.dart';
 import '../../data/models/product_model.dart';
@@ -1525,25 +1526,50 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                       ),
                       onPressed: isPicking
                           ? null
-                          : () async {
-                              setModalState(() => isPicking = true);
-                              try {
-                                // 1. Méthode universelle file_picker (100% fiable sur le Web hébergé et sur mobile)
-                                final files = await FilePicker.pickFiles(
-                                  type: FileType.image,
-                                );
+                          : () {
+                              if (kIsWeb) {
+                                // Sur le Web hébergé (Chrome, Safari, Android, iPhone) :
+                                // L'appel à uploadInput.click() DOIT se faire de manière 100% synchrone
+                                // lors du clic de l'utilisateur, sinon les navigateurs bloquent la boîte de dialogue.
+                                setModalState(() => isPicking = true);
+                                try {
+                                  final html.FileUploadInputElement uploadInput =
+                                      html.FileUploadInputElement()
+                                        ..accept = 'image/*'
+                                        ..multiple = false;
 
-                                if (files.isNotEmpty) {
-                                  final file = files.first;
-                                  final bytes = await file.readAsBytes();
-                                  final ext = (file.extension ?? 'jpeg').toLowerCase();
-                                  final mime = (ext == 'png') ? 'image/png' : 'image/jpeg';
-                                  final base64String = 'data:$mime;base64,${base64Encode(bytes)}';
-                                  setModalState(() {
-                                    currentPath = base64String;
+                                  uploadInput.onChange.listen((e) {
+                                    final files = uploadInput.files;
+                                    if (files != null && files.isNotEmpty) {
+                                      final html.File file = files[0];
+                                      final reader = html.FileReader();
+                                      reader.readAsDataUrl(file);
+                                      reader.onLoadEnd.listen((event) {
+                                        final result = reader.result as String?;
+                                        if (result != null && result.isNotEmpty) {
+                                          setModalState(() {
+                                            currentPath = result;
+                                            isPicking = false;
+                                          });
+                                        } else {
+                                          setModalState(() => isPicking = false);
+                                        }
+                                      });
+                                    } else {
+                                      setModalState(() => isPicking = false);
+                                    }
                                   });
-                                } else {
-                                  // 2. Fallback avec image_picker si l'utilisateur annule ou si besoin
+
+                                  // Déclenchement direct et instantané de l'explorateur du navigateur / galerie du smartphone
+                                  uploadInput.click();
+                                } catch (e) {
+                                  debugPrint('[Web Upload Input] Erreur: $e');
+                                  setModalState(() => isPicking = false);
+                                }
+                              } else {
+                                // Sur mobile natif (iOS / Android natif)
+                                () async {
+                                  setModalState(() => isPicking = true);
                                   try {
                                     final picker = ImagePicker();
                                     final XFile? imgFile = await picker.pickImage(
@@ -1559,12 +1585,12 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                                         currentPath = base64String;
                                       });
                                     }
-                                  } catch (_) {}
-                                }
-                              } catch (e) {
-                                debugPrint('[FilePicker/ImagePicker] Erreur: $e');
-                              } finally {
-                                setModalState(() => isPicking = false);
+                                  } catch (e) {
+                                    debugPrint('[Native ImagePicker] Erreur: $e');
+                                  } finally {
+                                    setModalState(() => isPicking = false);
+                                  }
+                                }();
                               }
                             },
                     ),
