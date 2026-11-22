@@ -141,16 +141,16 @@ class VerticalBookPage extends StatelessWidget {
                           fit: BoxFit.cover,
                           errorBuilder: (c, e, s) => const SizedBox.shrink(),
                         ),
-                        // Filtre sombre somptueux pour une lisibilité parfaite des textes et prix
+                        // Filtre sombre allégé pour faire ressortir l'image de fond tout en gardant une excellente lisibilité
                         Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                pageBg.withValues(alpha: 0.88),
-                                pageBg.withValues(alpha: 0.74),
-                                pageBg.withValues(alpha: 0.90),
+                                Colors.black.withValues(alpha: 0.50),
+                                Colors.black.withValues(alpha: 0.38),
+                                Colors.black.withValues(alpha: 0.55),
                               ],
                             ),
                           ),
