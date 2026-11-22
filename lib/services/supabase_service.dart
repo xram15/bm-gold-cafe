@@ -62,9 +62,8 @@ class SupabaseService {
       _isConfigured = true;
       debugPrint('[Supabase] Initialisé avec succès sur $supabaseUrl');
 
-      // Charger le menu dynamique
-      await fetchMenu();
-      await fetchPagePhotos();
+      // Charger le menu et les photos en une seule passe pour éviter tout clignotement / flash d'anciennes photos
+      await fetchAllMenuAndPhotos();
 
       // Écouter les changements en temps réel
       _subscribeToRealtimeChanges();
@@ -534,44 +533,94 @@ class SupabaseService {
   // 🔄 RECHARGEMENT & SYNCHRONISATION
   // ===========================================================================
 
-  Future<void> fetchMenu() async {
+  /// 🔄 Synchronisation unifiée et atomique : Charge simultanément les produits et les photos
+  /// et n'applique les changements au livre qu'une SEULE fois (élimine tout clignotement ou affichage d'anciennes photos)
+  Future<void> fetchAllMenuAndPhotos() async {
     if (!_isConfigured || _client == null) return;
 
     try {
-      final response = await _client!
-          .from('products')
-          .select('id, name, price, description, image_path, category_name')
-          .order('id', ascending: true);
+      // 1. Récupérer en parallèle tous les produits et la config des photos
+      final results = await Future.wait([
+        _client!
+            .from('products')
+            .select('id, name, price, description, image_path, category_name')
+            .neq('category_name', '__PAGE_PHOTOS__')
+            .order('id', ascending: true),
+        _client!
+            .from('products')
+            .select('name, description')
+            .eq('category_name', '__PAGE_PHOTOS__'),
+      ]);
 
-      final List<dynamic> data = response as List<dynamic>;
-      if (data.isEmpty) return;
+      final List<dynamic> productsData = results[0] as List<dynamic>;
+      final List<dynamic> photosRows = results[1] as List<dynamic>;
 
-      final Map<String, List<Product>> grouped = {};
-      for (final item in data) {
+      // A. Organiser les produits
+      final Map<String, List<Product>> groupedProducts = {};
+      for (final item in productsData) {
         final cat = (item['category_name'] as String?)?.trim().toUpperCase() ?? 'AUTRE';
-        grouped.putIfAbsent(cat, () => []).add(Product.fromJson(item as Map<String, dynamic>));
+        groupedProducts.putIfAbsent(cat, () => []).add(Product.fromJson(item as Map<String, dynamic>));
       }
 
-      final List<BookPage> updatedPages = [];
-      for (final page in currentBook.pages) {
-        final String catTitle = (page.category?.title ?? '').trim().toUpperCase();
-        final dynamicProducts = grouped[catTitle];
-
-        if (dynamicProducts != null && dynamicProducts.isNotEmpty) {
-          updatedPages.add(page.copyWith(
-            category: MenuCategory(title: page.category?.title ?? '', products: dynamicProducts),
-          ));
-        } else {
-          updatedPages.add(page);
+      // B. Organiser les photos
+      final Map<int, Map<String, dynamic>> photosByPage = {};
+      for (final row in photosRows) {
+        final name = row['name'] as String? ?? '';
+        final desc = row['description'] as String? ?? '';
+        if (!name.startsWith('page_') || desc.isEmpty) continue;
+        final pageIdx = int.tryParse(name.replaceFirst('page_', ''));
+        if (pageIdx != null) {
+          try {
+            photosByPage[pageIdx] = jsonDecode(desc) as Map<String, dynamic>;
+          } catch (_) {}
         }
       }
 
+      // C. Créer l'état complet du livre en une passe atomique
+      final List<BookPage> updatedPages = [];
+      for (int i = 0; i < currentBook.pages.length; i++) {
+        final page = currentBook.pages[i];
+        final String catTitle = (page.category?.title ?? '').trim().toUpperCase();
+        final dynamicProducts = groupedProducts[catTitle];
+        final photoData = photosByPage[i];
+
+        BookPage updatedPage = page;
+
+        // Mise à jour des produits si disponibles
+        if (dynamicProducts != null && dynamicProducts.isNotEmpty) {
+          updatedPage = updatedPage.copyWith(
+            category: MenuCategory(title: page.category?.title ?? '', products: dynamicProducts),
+          );
+        }
+
+        // Mise à jour des photos si disponibles
+        if (photoData != null) {
+          updatedPage = updatedPage.copyWith(
+            cornerPhotoPath: photoData['corner_photo'] as String? ?? updatedPage.cornerPhotoPath,
+            largeBottomPhotoPath: photoData['large_bottom_photo'] as String? ?? updatedPage.largeBottomPhotoPath,
+            largeBottomPhotoTitle: photoData['large_bottom_title'] as String? ?? updatedPage.largeBottomPhotoTitle,
+            secondBottomPhotoPath: photoData['second_bottom_photo'] as String? ?? updatedPage.secondBottomPhotoPath,
+            secondBottomPhotoTitle: photoData['second_bottom_title'] as String? ?? updatedPage.secondBottomPhotoTitle,
+            firstAlternatingPhotoPath: photoData['first_alternating_photo'] as String? ?? updatedPage.firstAlternatingPhotoPath,
+            firstAlternatingPhotoTitle: photoData['first_alternating_title'] as String? ?? updatedPage.firstAlternatingPhotoTitle,
+            secondAlternatingPhotoPath: photoData['second_alternating_photo'] as String? ?? updatedPage.secondAlternatingPhotoPath,
+            secondAlternatingPhotoTitle: photoData['second_alternating_title'] as String? ?? updatedPage.secondAlternatingPhotoTitle,
+          );
+        }
+
+        updatedPages.add(updatedPage);
+      }
+
+      // D. Application UNIQUE à l'écran
       _updateBook(updatedPages);
-      debugPrint('[Supabase] Synchronisation terminée : ${data.length} produits.');
+      await saveMenuToLocalStorage();
+      debugPrint('[Supabase] Synchronisation globale complète (produits & photos) effectuée sans clignotement.');
     } catch (e) {
-      debugPrint('[Supabase] fetchMenu fallback : $e');
+      debugPrint('[Supabase] Erreur fetchAllMenuAndPhotos: $e');
     }
   }
+
+  Future<void> fetchMenu() => fetchAllMenuAndPhotos();
 
   void _subscribeToRealtimeChanges() {
     if (!_isConfigured || _client == null || _menuSubscription != null || _menuRefreshTimer != null) return;
@@ -580,13 +629,9 @@ class SupabaseService {
       _menuSubscription = _client!
           .from('products')
           .stream(primaryKey: ['id'])
-      _menuSubscription = _client!
-          .from('products')
-          .stream(primaryKey: ['id'])
           .listen(
             (_) {
-              fetchMenu();
-              fetchPagePhotos();
+              fetchAllMenuAndPhotos();
             },
             onError: (Object error) {
               debugPrint('[Menu] Mises à jour en direct indisponibles; actualisation périodique activée.');
