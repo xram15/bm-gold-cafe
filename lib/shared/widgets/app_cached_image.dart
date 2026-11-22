@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 
@@ -26,6 +27,24 @@ class AppCachedImage extends StatelessWidget {
             child: Icon(Icons.restaurant_rounded, color: AppColors.gold, size: 24),
           ),
         );
+
+    // Support des images importées depuis le téléphone en data:image base64
+    if (imagePath.startsWith('data:image')) {
+      try {
+        final commaIdx = imagePath.indexOf(',');
+        final base64Str = commaIdx != -1 ? imagePath.substring(commaIdx + 1) : imagePath;
+        final bytes = base64Decode(base64Str);
+        return Image.memory(
+          bytes,
+          width: width,
+          height: height,
+          fit: fit,
+          errorBuilder: (context, error, stackTrace) => fallback,
+        );
+      } catch (_) {
+        return fallback;
+      }
+    }
 
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return Image.network(

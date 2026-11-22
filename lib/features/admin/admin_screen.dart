@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/app_colors.dart';
 import '../../data/models/page_model.dart';
@@ -24,12 +26,12 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   final SupabaseService _service = SupabaseService.instance;
 
   // Authentification
-  final TextEditingController _emailController = TextEditingController(text: 'ramez.matri94@gmail.com');
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isAuthLoading = false;
   String? _authErrorMessage;
-  bool _rememberMe = true;
+  bool _rememberMe = false;
 
   // Navigation dans le Dashboard
   int _currentZoneIndex = 0; // 0 = Produits & Prix, 1 = Photos du Livre
@@ -47,11 +49,15 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
       final prefs = await SharedPreferences.getInstance();
       final rem = prefs.getBool('bm_remember_me') ?? false;
       if (rem) {
-        setState(() {
-          _rememberMe = true;
-          _emailController.text = prefs.getString('bm_saved_email') ?? _emailController.text;
-          _passwordController.text = prefs.getString('bm_saved_password') ?? '';
-        });
+        final savedEmail = prefs.getString('bm_saved_email');
+        final savedPassword = prefs.getString('bm_saved_password');
+        if (savedEmail != null && savedEmail.isNotEmpty) {
+          setState(() {
+            _rememberMe = true;
+            _emailController.text = savedEmail;
+            _passwordController.text = savedPassword ?? '';
+          });
+        }
       }
     } catch (_) {}
   }
@@ -1407,30 +1413,9 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
     bool hasTitle = false,
     required Function(String path, String? title) onSave,
   }) {
-    final pathCtrl = TextEditingController(text: initialPath ?? '');
+    String currentPath = initialPath ?? '';
     final titleCtrl = TextEditingController(text: initialTitle ?? '');
-
-    // Suggestions de photos prédéfinies
-    final List<String> presetPhotos = [
-      'assets/restaurant/cafe.png',
-      'assets/restaurant/cat_boissons.png',
-      'assets/petit_dejeuner/gourmet_breakfast.jpg',
-      'assets/petit_dejeuner/banner_breakfast.jpg',
-      'assets/petit_dejeuner/dish_croissant.jpg',
-      'assets/restaurant/bruschetta.jfif',
-      'assets/restaurant/brik.jfif',
-      'assets/restaurant/salade.jfif',
-      'assets/restaurant/mechouia.jpg',
-      'assets/restaurant/pasta.jfif',
-      'assets/restaurant/banner_pizza.jpg',
-      'assets/restaurant/cat_pizza.png',
-      'assets/restaurant/gourmet_meat.jpg',
-      'assets/restaurant/cheeseburger.jpg',
-      'assets/restaurant/crepefruit.jpg',
-      'assets/restaurant/cat_crepe.jfif',
-      'assets/restaurant/fondont.png',
-      'assets/restaurant/cat_shisha.jfif',
-    ];
+    bool isPicking = false;
 
     showDialog(
       context: context,
@@ -1444,7 +1429,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             ),
             title: Row(
               children: [
-                const Icon(Icons.add_photo_alternate_outlined, color: AppColors.gold, size: 22),
+                const Icon(Icons.add_a_photo_rounded, color: AppColors.gold, size: 22),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -1460,64 +1445,102 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
               ],
             ),
             content: SizedBox(
-              width: 380,
+              width: 360,
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (hasTitle) ...[
                       _buildField(titleCtrl, 'Titre / Légende de la photo', Icons.title_rounded),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                     ],
 
-                    _buildField(pathCtrl, 'Chemin ou URL de l\'image', Icons.link_rounded),
-                    const SizedBox(height: 14),
-
-                    const Text(
-                      'Ou choisir parmi les visuels du café :',
-                      style: TextStyle(color: AppColors.goldLight, fontSize: 11.5, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Grille de sélection rapide
-                    SizedBox(
-                      height: 130,
-                      child: GridView.builder(
-                        itemCount: presetPhotos.length,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                        ),
-                        itemBuilder: (context, idx) {
-                          final p = presetPhotos[idx];
-                          final isSelected = pathCtrl.text == p;
-
-                          return GestureDetector(
-                            onTap: () {
-                              setModalState(() => pathCtrl.text = p);
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: isSelected ? AppColors.gold : Colors.white12,
-                                  width: isSelected ? 2 : 1,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(7),
-                                child: Image.asset(
-                                  p,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (c, e, s) => const Icon(Icons.image, size: 20, color: Colors.white24),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+                    // Aperçu de la photo actuelle ou sélectionnée
+                    Container(
+                      height: 160,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF101014),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.gold.withValues(alpha: 0.6), width: 1.2),
                       ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(11),
+                        child: currentPath.isNotEmpty
+                            ? (currentPath.startsWith('data:image')
+                                ? Image.memory(
+                                    base64Decode(currentPath.substring(currentPath.indexOf(',') + 1)),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (c, e, s) => const Center(
+                                      child: Icon(Icons.broken_image_rounded, color: Colors.white24, size: 36),
+                                    ),
+                                  )
+                                : Image.asset(
+                                    currentPath,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (c, e, s) => const Center(
+                                      child: Icon(Icons.broken_image_rounded, color: Colors.white24, size: 36),
+                                    ),
+                                  ))
+                            : const Center(
+                                child: Text(
+                                  'Aucune photo sélectionnée',
+                                  style: TextStyle(color: Colors.white38, fontSize: 12),
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Bouton unique pour importer depuis la galerie du téléphone
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF242430),
+                        foregroundColor: AppColors.gold,
+                        side: const BorderSide(color: AppColors.gold, width: 1.1),
+                        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: isPicking
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.gold),
+                            )
+                          : const Icon(Icons.photo_library_rounded, size: 20),
+                      label: Text(
+                        isPicking ? 'Chargement...' : 'Choisir une photo du téléphone',
+                        style: const TextStyle(
+                          fontFamily: 'Montserrat',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      onPressed: isPicking
+                          ? null
+                          : () async {
+                              setModalState(() => isPicking = true);
+                              try {
+                                final picker = ImagePicker();
+                                final XFile? file = await picker.pickImage(
+                                  source: ImageSource.gallery,
+                                  maxWidth: 1200,
+                                  maxHeight: 1200,
+                                  imageQuality: 85,
+                                );
+                                if (file != null) {
+                                  final bytes = await file.readAsBytes();
+                                  final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                  setModalState(() {
+                                    currentPath = base64String;
+                                  });
+                                }
+                              } catch (e) {
+                                debugPrint('[ImagePicker] Erreur: $e');
+                              } finally {
+                                setModalState(() => isPicking = false);
+                              }
+                            },
                     ),
                   ],
                 ),
@@ -1529,15 +1552,18 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                 child: const Text('Annuler', style: TextStyle(color: Colors.white60)),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.gold, foregroundColor: Colors.black),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.gold,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
                 onPressed: () {
-                  final newPath = pathCtrl.text.trim();
-                  if (newPath.isNotEmpty) {
+                  if (currentPath.isNotEmpty) {
                     Navigator.pop(ctx);
-                    onSave(newPath, hasTitle ? titleCtrl.text.trim() : null);
+                    onSave(currentPath, hasTitle ? titleCtrl.text.trim() : null);
                   }
                 },
-                child: const Text('Appliquer', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text('Valider la photo', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           );

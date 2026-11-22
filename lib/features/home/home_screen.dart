@@ -372,82 +372,77 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Titre royal "BIENVENUE À L'ESPACE VIP 4*" placé en haut du livre sur fond clair
   Widget _buildVipHeader() {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onLongPress: () => AdminScreen.open(context),
-      onDoubleTap: () => AdminScreen.open(context),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            "BIENVENUE À L'ESPACE",
-            style: TextStyle(
-              fontFamily: 'Montserrat',
-              letterSpacing: 3.5,
-              fontSize: 11,
-              color: Color(0xFF7A5826), // Bronze doré prestigieux sur fond clair
-              fontWeight: FontWeight.w700,
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          "BIENVENUE À L'ESPACE",
+          style: TextStyle(
+            fontFamily: 'Montserrat',
+            letterSpacing: 3.5,
+            fontSize: 11,
+            color: Color(0xFF7A5826), // Bronze doré prestigieux sur fond clair
+            fontWeight: FontWeight.w700,
           ),
-          const SizedBox(height: 1),
-          ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [
-                Color(0xFFC59B4B),
-                Color(0xFF9E722C),
-                Color(0xFF7A5826),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ).createShader(bounds),
-            child: const Text(
-              'V I P',
-              style: TextStyle(
-                fontFamily: 'Svetze',
-                fontSize: 24,
-                letterSpacing: 5.0,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(height: 2),
-          // 4 étoiles dorées
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 20,
-                height: 1.2,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.transparent, Color(0xFFC59B4B)],
-                  ),
-                  borderRadius: BorderRadius.circular(1),
-                ),
-              ),
-              const SizedBox(width: 5),
-              ...List.generate(4, (index) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 1.5),
-                  child: Icon(Icons.star, size: 10, color: Color(0xFFC59B4B)),
-                );
-              }),
-              const SizedBox(width: 5),
-              Container(
-                width: 20,
-                height: 1.2,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFC59B4B), Colors.transparent],
-                  ),
-                  borderRadius: BorderRadius.circular(1),
-                ),
-              ),
+        ),
+        const SizedBox(height: 1),
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [
+              Color(0xFFC59B4B),
+              Color(0xFF9E722C),
+              Color(0xFF7A5826),
             ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ).createShader(bounds),
+          child: const Text(
+            'V I P',
+            style: TextStyle(
+              fontFamily: 'Svetze',
+              fontSize: 24,
+              letterSpacing: 5.0,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 2),
+        // 4 étoiles dorées
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 20,
+              height: 1.2,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Colors.transparent, Color(0xFFC59B4B)],
+                ),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+            const SizedBox(width: 5),
+            ...List.generate(4, (index) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 1.5),
+                child: Icon(Icons.star, size: 10, color: Color(0xFFC59B4B)),
+              );
+            }),
+            const SizedBox(width: 5),
+            Container(
+              width: 20,
+              height: 1.2,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFC59B4B), Colors.transparent],
+                ),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
