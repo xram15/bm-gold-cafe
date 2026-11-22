@@ -1117,6 +1117,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   void _showAddProductDialog(String categoryTitle) {
     final nameCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
+    final sectionCtrl = TextEditingController();
     final descCtrl = TextEditingController();
 
     showDialog(
@@ -1160,6 +1161,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                 const SizedBox(height: 12),
                 _buildField(priceCtrl, 'Prix (ex: 8.5 DT)', Icons.monetization_on_outlined),
                 const SizedBox(height: 12),
+                _buildField(sectionCtrl, 'Sous-catégorie / Section (ex: Café Spécial, Chocolat...)', Icons.category_outlined),
+                const SizedBox(height: 12),
                 _buildField(descCtrl, 'Description (ingrédients, détails...)', Icons.description_outlined, maxLines: 2),
               ],
             ),
@@ -1179,6 +1182,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             onPressed: () async {
               final name = nameCtrl.text.trim();
               final price = priceCtrl.text.trim();
+              final sec = sectionCtrl.text.trim();
 
               if (name.isEmpty || price.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1193,6 +1197,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                 name: name,
                 price: price,
                 description: descCtrl.text,
+                section: sec.isNotEmpty ? sec : null,
               );
               setState(() {});
             },
@@ -1206,6 +1211,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   void _showEditProductDialog(Product prod) {
     final nameCtrl = TextEditingController(text: prod.name);
     final priceCtrl = TextEditingController(text: prod.price);
+    final sectionCtrl = TextEditingController(text: prod.section ?? '');
     final descCtrl = TextEditingController(text: prod.description ?? '');
 
     showDialog(
@@ -1242,6 +1248,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                 const SizedBox(height: 12),
                 _buildField(priceCtrl, 'Prix (ex: 8.5 DT)', Icons.monetization_on_outlined),
                 const SizedBox(height: 12),
+                _buildField(sectionCtrl, 'Sous-catégorie / Section (ex: Café Spécial, Chocolat...)', Icons.category_outlined),
+                const SizedBox(height: 12),
                 _buildField(descCtrl, 'Description', Icons.description_outlined, maxLines: 2),
               ],
             ),
@@ -1261,6 +1269,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             onPressed: () async {
               final name = nameCtrl.text.trim();
               final price = priceCtrl.text.trim();
+              final sec = sectionCtrl.text.trim();
 
               if (name.isEmpty || price.isEmpty) return;
 
@@ -1271,6 +1280,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                 name: name,
                 price: price,
                 description: descCtrl.text,
+                section: sec.isNotEmpty ? sec : null,
               );
               setState(() {});
             },

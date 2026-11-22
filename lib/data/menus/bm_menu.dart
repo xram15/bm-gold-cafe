@@ -51,16 +51,38 @@ const Book bmMenu = Book(
     ),
 
     // -------------------------------------------------------------------------
-    // PAGE 3 : Café & Boissons Chaudes
+    // PAGE 3 : CAFÉ & BOISSONS CHAUDES (MULTI-SECTIONS AVEC BACKGROUND)
     // -------------------------------------------------------------------------
     BookPage(
-      style: PageStyle.singleLargeBottom,
+      style: PageStyle.sectionsWithBackground,
       cornerPhotoPath: 'assets/restaurant/cafe.png',
-      largeBottomPhotoPath: 'assets/restaurant/cat_boissons.png',
-      largeBottomPhotoTitle: "L'ÉTHIQUE DU CAFÉ",
+      backgroundImagePath: 'assets/coffee_bg.jpg',
       category: MenuCategory(
-        title: 'Café & Boissons Chaudes',
-        products: <Product>[],
+        title: 'CAFÉ & BOISSONS CHAUDES',
+        products: <Product>[
+          // Section 1 : CAFÉ
+          Product(name: 'Express', price: '2.800', section: 'Café'),
+          Product(name: 'Américain', price: '2.800', section: 'Café'),
+          Product(name: 'Cappucin nescafé', price: '2.900', section: 'Café'),
+          Product(name: 'Direct', price: '3.000', section: 'Café'),
+          Product(name: 'Direct nescafé', price: '3.000', section: 'Café'),
+
+          // Section 2 : CAFÉ SPÉCIAL
+          Product(name: 'Express spéciale', price: '3.500', section: 'Café Spécial'),
+          Product(name: 'Cappucin Spéciale', price: '3.800', section: 'Café Spécial'),
+          Product(name: 'Direct spéciale', price: '4.000', section: 'Café Spécial'),
+          Product(name: 'Américain spécial', price: '3.700', section: 'Café Spécial'),
+
+          // Section 3 : EXPRESSO (LAVAZZA)
+          Product(name: 'Express', price: '3.600', section: 'Expresso (LAVAZZA)'),
+          Product(name: 'Cappucin', price: '4.000', section: 'Expresso (LAVAZZA)'),
+          Product(name: 'Direct', price: '4.500', section: 'Expresso (LAVAZZA)'),
+
+          // Section 4 : CHOCOLAT
+          Product(name: 'Chocolat au lait', price: '2.900', section: 'Chocolat'),
+          Product(name: 'Chocolat chaud', price: '4.500', section: 'Chocolat'),
+          Product(name: 'Chocolat chaud chantilly', price: '5.300', section: 'Chocolat'),
+        ],
       ),
     ),
 

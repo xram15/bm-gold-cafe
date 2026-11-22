@@ -123,6 +123,45 @@ class VerticalBookPage extends StatelessWidget {
               ),
             ),
 
+            // ── 2b. Photo en arrière-plan derrière le texte (Style Café) ────
+            if (pageData?.backgroundImagePath != null) ...[
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 22),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(8),
+                      bottomRight: Radius.circular(8),
+                    ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.asset(
+                          pageData!.backgroundImagePath!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => const SizedBox.shrink(),
+                        ),
+                        // Filtre sombre somptueux pour une lisibilité parfaite des textes et prix
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                pageBg.withValues(alpha: 0.88),
+                                pageBg.withValues(alpha: 0.74),
+                                pageBg.withValues(alpha: 0.90),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+
             // ── 3. Contenu principal unifié (titre, texte, photos) ───────
             Padding(
               padding: const EdgeInsets.only(left: 36, top: 14, right: 24, bottom: 10),
@@ -234,6 +273,9 @@ class VerticalBookPage extends StatelessWidget {
 
   /// Déduit le style par défaut si non spécifié
   PageStyle _deduceStyle(BookPage? pageData) {
+    if (pageData?.style == PageStyle.sectionsWithBackground) {
+      return PageStyle.sectionsWithBackground;
+    }
     if (pageData?.bottomPhotoStyle == BottomPhotoStyle.threeCircular ||
         (pageData?.bottomPhotos != null && pageData!.bottomPhotos!.isNotEmpty)) {
       return PageStyle.threeCircularBottom;
@@ -331,7 +373,182 @@ class VerticalBookPage extends StatelessWidget {
             ),
           ],
         );
+
+      // ── STYLE 5 : Multi-sections (types de cafés...) avec photo de fond ──
+      case PageStyle.sectionsWithBackground:
+        return _buildSectionsProductList(
+          products: products,
+          textColor: textColor,
+          priceColor: priceColor,
+          descColor: descColor,
+          goldBorder: goldBorder,
+        );
     }
+  }
+
+  /// Affiche les produits regroupés par section (ex: Café, Café Spécial, Expresso (LAVAZZA), Chocolat)
+  Widget _buildSectionsProductList({
+    required List<Product> products,
+    required Color textColor,
+    required Color priceColor,
+    required Color descColor,
+    required Color goldBorder,
+  }) {
+    // Regrouper par section tout en préservant l'ordre d'insertion
+    final Map<String, List<Product>> grouped = {};
+    for (final prod in products) {
+      final sec = prod.section?.trim().isNotEmpty == true ? prod.section!.trim() : 'Café';
+      grouped.putIfAbsent(sec, () => []).add(prod);
+    }
+
+    final sectionKeys = grouped.keys.toList();
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: sectionKeys.map((sectionName) {
+        final secProducts = grouped[sectionName] ?? [];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Titre de section stylé avec double trait doré ──
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2.0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 14,
+                    height: 1,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          goldBorder.withValues(alpha: 0.7),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    width: 3.5,
+                    height: 3.5,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: goldBorder,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    sectionName.toUpperCase(),
+                    style: TextStyle(
+                      fontFamily: 'Svetze',
+                      color: goldBorder,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.4,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.9),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    width: 3.5,
+                    height: 3.5,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: goldBorder,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            goldBorder.withValues(alpha: 0.7),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 1.5),
+
+            // ── Liste des produits de la section ──
+            ...secProducts.map((prod) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 1.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      prod.name,
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        color: textColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withValues(alpha: 0.9),
+                            blurRadius: 3,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          // Ligne pointillée dorée
+                          return CustomPaint(
+                            size: Size(constraints.maxWidth, 8),
+                            painter: _DottedLinePainter(
+                              color: goldBorder.withValues(alpha: 0.38),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      prod.price,
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        color: priceColor,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withValues(alpha: 0.9),
+                            blurRadius: 3,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        );
+      }).toList(),
+    );
   }
 
   // ── STYLE 1 & 2 : Liste standard des produits (sans scroll) ───────────────
@@ -1098,6 +1315,31 @@ class MoonCrescentPainter extends CustomPainter {
       false,
       glowPaint,
     );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Peintre pour la ligne pointillée reliant le produit au prix
+class _DottedLinePainter extends CustomPainter {
+  final Color color;
+
+  _DottedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.0;
+
+    const double dotRadius = 0.9;
+    const double step = 4.5;
+    final double y = size.height / 2;
+
+    for (double x = 2; x < size.width - 2; x += step) {
+      canvas.drawCircle(Offset(x, y), dotRadius, paint);
+    }
   }
 
   @override

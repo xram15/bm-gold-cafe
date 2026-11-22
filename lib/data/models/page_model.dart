@@ -32,6 +32,9 @@ enum PageStyle {
 
   /// STYLE 4 : Produits avec vignettes photos (étoiles **) + 2 grandes photos en bas
   inlineThumbnailsTwoBottom,
+
+  /// STYLE 5 : Multi-sections (types de cafés...) avec photo de fond et SANS photo en bas
+  sectionsWithBackground,
 }
 
 enum BottomPhotoStyle {
@@ -88,6 +91,9 @@ class BookPage {
   final String? secondBottomPhotoPath;
   final String? secondBottomPhotoTitle;
 
+  // ── STYLE 5 : Photo d'arrière-plan pleine page (derrière le texte) ─────────
+  final String? backgroundImagePath;
+
   // Champs de rétrocompatibilité
   final PageLayoutType layoutType;
   final BottomPhotoStyle bottomPhotoStyle;
@@ -106,6 +112,7 @@ class BookPage {
     this.secondAlternatingPhotoTitle,
     this.secondBottomPhotoPath,
     this.secondBottomPhotoTitle,
+    this.backgroundImagePath,
     this.layoutType = PageLayoutType.textOnly,
     this.bottomPhotoStyle = BottomPhotoStyle.singleLarge,
     this.mainPhotoPath,
@@ -124,6 +131,7 @@ class BookPage {
     String? secondAlternatingPhotoTitle,
     String? secondBottomPhotoPath,
     String? secondBottomPhotoTitle,
+    String? backgroundImagePath,
     PageLayoutType? layoutType,
     BottomPhotoStyle? bottomPhotoStyle,
     String? mainPhotoPath,
@@ -141,6 +149,7 @@ class BookPage {
       secondAlternatingPhotoTitle: secondAlternatingPhotoTitle ?? this.secondAlternatingPhotoTitle,
       secondBottomPhotoPath: secondBottomPhotoPath ?? this.secondBottomPhotoPath,
       secondBottomPhotoTitle: secondBottomPhotoTitle ?? this.secondBottomPhotoTitle,
+      backgroundImagePath: backgroundImagePath ?? this.backgroundImagePath,
       layoutType: layoutType ?? this.layoutType,
       bottomPhotoStyle: bottomPhotoStyle ?? this.bottomPhotoStyle,
       mainPhotoPath: mainPhotoPath ?? this.mainPhotoPath,

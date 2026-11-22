@@ -217,6 +217,7 @@ class SupabaseService {
     required String price,
     String? description,
     String? imagePath,
+    String? section,
   }) async {
     if (pageIndex < 0 || pageIndex >= currentBook.pages.length) return;
 
@@ -230,6 +231,7 @@ class SupabaseService {
       price: price.trim(),
       description: description?.trim().isEmpty == true ? null : description?.trim(),
       imagePath: imagePath?.trim().isEmpty == true ? null : imagePath?.trim(),
+      section: section?.trim().isEmpty == true ? null : section?.trim(),
     );
 
     // 1. Mise à jour instantanée de la page exacte
@@ -249,7 +251,7 @@ class SupabaseService {
           'category_name': categoryTitle,
           'name': newProduct.name,
           'price': newProduct.price,
-          'description': newProduct.description,
+          'description': newProduct.toJson()['description'],
           'image_path': newProduct.imagePath,
           'created_at': DateTime.now().toIso8601String(),
           'updated_at': DateTime.now().toIso8601String(),
@@ -268,6 +270,7 @@ class SupabaseService {
     required String price,
     String? description,
     String? imagePath,
+    String? section,
   }) async {
     if (pageIndex < 0 || pageIndex >= currentBook.pages.length) return;
 
@@ -280,6 +283,7 @@ class SupabaseService {
       price: price.trim(),
       description: description?.trim().isEmpty == true ? null : description?.trim(),
       imagePath: imagePath?.trim().isEmpty == true ? null : imagePath?.trim(),
+      section: section?.trim().isEmpty == true ? null : section?.trim(),
     );
 
     final List<Product> updatedProducts = [];
@@ -305,7 +309,7 @@ class SupabaseService {
         await _client!.from('products').update({
           'name': updatedProduct.name,
           'price': updatedProduct.price,
-          'description': updatedProduct.description,
+          'description': updatedProduct.toJson()['description'],
           'image_path': updatedProduct.imagePath,
           'updated_at': DateTime.now().toIso8601String(),
         }).or('id.eq.$productId,name.eq.$productId');
