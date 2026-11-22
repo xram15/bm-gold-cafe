@@ -38,7 +38,7 @@ const Book bmMenu = Book(
     // PAGE 2 : THÉ & INFUSIONS
     // -------------------------------------------------------------------------
     BookPage(
-      style: PageStyle.sectionsWithBackground,
+      style: PageStyle.spacedWithBackgroundNoBottomPhotos,
       cornerPhotoPath: 'assets/restaurant/cafe.png',
       backgroundImagePath: 'assets/the-back.jpg',
       category: MenuCategory(

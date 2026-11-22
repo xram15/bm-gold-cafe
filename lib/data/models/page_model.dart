@@ -38,6 +38,9 @@ enum PageStyle {
 
   /// STYLE 6 : Produits aérés avec photo d'arrière-plan + 2 cadres photos en bas
   spacedWithBackgroundTwoBottomPhotos,
+
+  /// STYLE 7 : Produits aérés avec photo d'arrière-plan pleine page (SANS cadres en bas)
+  spacedWithBackgroundNoBottomPhotos,
 }
 
 enum BottomPhotoStyle {

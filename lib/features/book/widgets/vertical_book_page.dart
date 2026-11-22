@@ -279,6 +279,9 @@ class VerticalBookPage extends StatelessWidget {
     if (pageData?.style == PageStyle.spacedWithBackgroundTwoBottomPhotos) {
       return PageStyle.spacedWithBackgroundTwoBottomPhotos;
     }
+    if (pageData?.style == PageStyle.spacedWithBackgroundNoBottomPhotos) {
+      return PageStyle.spacedWithBackgroundNoBottomPhotos;
+    }
     if (pageData?.bottomPhotoStyle == BottomPhotoStyle.threeCircular ||
         (pageData?.bottomPhotos != null && pageData!.bottomPhotos!.isNotEmpty)) {
       return PageStyle.threeCircularBottom;
@@ -406,6 +409,16 @@ class VerticalBookPage extends StatelessWidget {
               goldBorder: goldBorder,
             ),
           ],
+        );
+
+      // ── STYLE 7 : Produits aérés avec photo de fond pleine page (SANS cadres en bas) ──
+      case PageStyle.spacedWithBackgroundNoBottomPhotos:
+        return _buildSpacedProductList(
+          products: products,
+          textColor: textColor,
+          priceColor: priceColor,
+          descColor: descColor,
+          goldBorder: goldBorder,
         );
     }
   }
