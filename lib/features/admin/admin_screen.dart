@@ -465,12 +465,14 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         ])),
         IconButton(
           tooltip: 'Enregistrer',
+          color: const Color(0xFF171717),
           onPressed: _isSaving ? null : _handleManualSave,
-          icon: _isSaving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.save_outlined, size: 22),
+          icon: _isSaving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF171717))) : const Icon(Icons.save_outlined, size: 22, color: Color(0xFF171717)),
         ),
         PopupMenuButton<String>(
           tooltip: 'Compte administrateur',
-          icon: const CircleAvatar(radius: 16, backgroundColor: Color(0xFFE4E5E9), child: Icon(Icons.person, size: 18, color: Color(0xFF252936))),
+          color: const Color(0xFF171717),
+          icon: const CircleAvatar(radius: 16, backgroundColor: Color(0xFFE4E5E9), child: Icon(Icons.person, size: 18, color: Color(0xFF171717))),
           onSelected: (value) async {
             if (value == 'admin') _showAdminManagementDialog();
             if (value == 'preview') {
@@ -608,6 +610,13 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             child: Text(product.price, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF302B20))),
           )),
         ])),
+        IconButton(
+          tooltip: 'Modifier',
+          onPressed: () => _showEditProductDialog(product),
+          icon: const Icon(Icons.edit_outlined, size: 19, color: Color(0xFFAC7D24)),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+        ),
         PopupMenuButton<String>(
           tooltip: 'Actions du produit', icon: const Icon(Icons.more_horiz, size: 20), padding: EdgeInsets.zero,
           onSelected: (action) { if (action == 'edit') _showEditProductDialog(product); if (action == 'delete') _showDeleteProductDialog(product); },

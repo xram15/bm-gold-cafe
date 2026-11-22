@@ -20,3 +20,21 @@ create policy "Owners manage tables" on public.cafe_tables
   for all to authenticated
   using ((select auth.uid()) = owner_id)
   with check ((select auth.uid()) = owner_id);
+
+-- Lecture publique limitée au statut d'UNE table (scan du QR code).
+-- Seule la personne possédant l'UUID (contenu dans le QR) peut interroger ;
+-- aucune autre donnée ni liste n'est exposée aux utilisateurs anonymes.
+create or replace function public.get_cafe_table_status(p_id uuid)
+returns table (booked boolean, name text, guest_name text, booked_for timestamptz, capacity integer)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select t.booked, t.name, t.guest_name, t.booked_for, t.capacity
+  from public.cafe_tables t
+  where t.id = p_id;
+$$;
+
+revoke all on function public.get_cafe_table_status(uuid) from public;
+grant execute on function public.get_cafe_table_status(uuid) to anon, authenticated;

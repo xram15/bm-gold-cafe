@@ -21,6 +21,93 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _initVideo();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkScannedTable());
+  }
+
+  // Scan QR d'une table : ?table=<uuid> → alerter si la table est réservée
+  Future<void> _checkScannedTable() async {
+    final tableId = Uri.base.queryParameters['table'];
+    if (tableId == null || tableId.isEmpty) return;
+    final status = await SupabaseService.instance.fetchTableStatus(tableId);
+    if (!mounted || status == null || status['booked'] != true) return;
+    _showReservedDialog(status);
+  }
+
+  void _showReservedDialog(Map<String, dynamic> status) {
+    final guest = (status['guest_name'] as String?)?.trim();
+    final when = DateTime.tryParse(status['booked_for'] as String? ?? '')?.toLocal();
+    final capacity = (status['capacity'] as num?)?.toInt();
+    final whenText = when == null
+        ? null
+        : '${when.day.toString().padLeft(2, '0')}/${when.month.toString().padLeft(2, '0')}/${when.year}'
+            ' à ${when.hour.toString().padLeft(2, '0')}:${when.minute.toString().padLeft(2, '0')}';
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF17171A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: Color(0xFFC59B4B), width: 1.2),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.workspace_premium, color: Color(0xFFD4AF37), size: 42),
+            const SizedBox(height: 12),
+            const Text(
+              'TABLE RÉSERVÉE',
+              style: TextStyle(
+                fontFamily: 'Montserrat',
+                color: Color(0xFFE5C158),
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+                letterSpacing: 3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              guest != null && guest.isNotEmpty
+                  ? 'Réservée pour ${guest.toUpperCase()}'
+                  : 'Cette table est actuellement réservée.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            if (whenText != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                whenText,
+                style: const TextStyle(color: Color(0xFFB9A467), fontSize: 12),
+              ),
+            ],
+            if (capacity != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Capacité : $capacity personne(s)',
+                style: const TextStyle(color: Color(0xFF8B8F9A), fontSize: 11),
+              ),
+            ],
+            const SizedBox(height: 10),
+            const Text(
+              'Merci de vous rapprocher du personnel.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF9A9DA5), fontSize: 11, fontStyle: FontStyle.italic),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text(
+                  'Voir le menu',
+                  style: TextStyle(color: Color(0xFFE5C158), fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _initVideo() async {

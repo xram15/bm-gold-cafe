@@ -179,9 +179,11 @@ class _BookScreenState extends State<BookScreen> {
                   ),
                 ),
 
-                // ── Indicateurs à points dorés agrandis au swipe ─────────────
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0, top: 4.0),
+                // ── Indicateurs de page : chiffres dorés couronnés, tactiles ──
+                Container(
+                  width: double.infinity,
+                  color: darkColor,
+                  padding: const EdgeInsets.only(top: 12.0, bottom: 26.0),
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Row(
@@ -189,29 +191,46 @@ class _BookScreenState extends State<BookScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(totalPages, (index) {
                         final bool isCurrent = index == _currentPage;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeOutCubic,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: isCurrent ? 32 : 10,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: isCurrent
-                                ? goldBright
-                                : const Color(
-                                    0xFFC59B4B,
-                                  ).withValues(alpha: 0.35),
-                            borderRadius: BorderRadius.circular(4),
-                            boxShadow: isCurrent
-                                ? [
-                                    BoxShadow(
-                                      color: goldBright.withValues(alpha: 0.55),
-                                      blurRadius: 8,
-                                      spreadRadius: 1,
-                                      offset: const Offset(0, 1),
-                                    ),
-                                  ]
-                                : null,
+                        final int number = index + 1;
+                        if (number > 10) {
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOutCubic,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: isCurrent ? 32 : 10,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: isCurrent
+                                  ? goldBright
+                                  : const Color(
+                                      0xFFC59B4B,
+                                    ).withValues(alpha: 0.35),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          );
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _flipKey.currentState?.goToPage(index),
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeOutCubic,
+                              opacity: isCurrent ? 1.0 : 0.55,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeOutCubic,
+                                width: isCurrent ? 72 : 34,
+                                height: isCurrent ? 72 : 34,
+                                child: Image.asset(
+                                  'assets/numbers/num_$number.png',
+                                  fit: BoxFit.contain,
+                                  filterQuality: FilterQuality.medium,
+                                  gaplessPlayback: true,
+                                ),
+                              ),
+                            ),
                           ),
                         );
                       }),

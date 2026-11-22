@@ -46,6 +46,22 @@ class SupabaseService {
 
   String? get currentAdminEmail => _client?.auth.currentUser?.email;
 
+  /// Statut public d'une table (scan QR) : null si table inconnue ou service indisponible.
+  Future<Map<String, dynamic>?> fetchTableStatus(String tableId) async {
+    if (_client == null || !_isConfigured) return null;
+    try {
+      final rows = await _client!.rpc(
+        'get_cafe_table_status',
+        params: {'p_id': tableId},
+      );
+      if (rows is! List || rows.isEmpty || rows.first is! Map) return null;
+      return Map<String, dynamic>.from(rows.first as Map);
+    } catch (e) {
+      debugPrint('[Supabase] Erreur statut table: $e');
+      return null;
+    }
+  }
+
   static const String _kLocalMenuStorageKey = 'bm_gold_saved_menu_v1';
 
   /// Initialisation Supabase

@@ -98,6 +98,16 @@ class VerticalBookFlipViewState extends State<VerticalBookFlipView>
     _controller.forward(from: 0.0);
   }
 
+  void goToPage(int page) {
+    if (_isFlipping) return;
+    final target = page.clamp(0, pageCount - 1);
+    if (target == _currentPage) return;
+    setState(() {
+      _currentPage = target;
+    });
+    widget.onPageChanged?.call(_currentPage);
+  }
+
   void _onDragStart(DragStartDetails details) {
     if (_isFlipping) return;
     _dragStartX = details.localPosition.dx;
