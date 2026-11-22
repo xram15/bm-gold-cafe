@@ -504,6 +504,20 @@ class SupabaseService {
         pagesData.add({
           'category_title': page.category?.title ?? '',
           'products': productsJson,
+          'corner_photo': page.cornerPhotoPath,
+          'large_bottom_photo': page.largeBottomPhotoPath,
+          'large_bottom_title': page.largeBottomPhotoTitle,
+          'second_bottom_photo': page.secondBottomPhotoPath,
+          'second_bottom_title': page.secondBottomPhotoTitle,
+          'first_alternating_photo': page.firstAlternatingPhotoPath,
+          'first_alternating_title': page.firstAlternatingPhotoTitle,
+          'second_alternating_photo': page.secondAlternatingPhotoPath,
+          'second_alternating_title': page.secondAlternatingPhotoTitle,
+          'bottom_photos': page.bottomPhotos?.map((bp) => {
+            'title': bp.title,
+            'price': bp.price,
+            'imagePath': bp.imagePath,
+          }).toList(),
         });
       }
       final jsonString = jsonEncode(pagesData);
@@ -531,11 +545,32 @@ class SupabaseService {
           final pageData = decoded[i] as Map<String, dynamic>;
           final rawProducts = pageData['products'] as List<dynamic>? ?? [];
           final products = rawProducts.map((p) => Product.fromJson(Map<String, dynamic>.from(p as Map))).toList();
+
+          final rawBottomPhotos = pageData['bottom_photos'] as List<dynamic>?;
+          List<BottomPhoto>? bottomPhotos;
+          if (rawBottomPhotos != null) {
+            bottomPhotos = rawBottomPhotos.map((bp) => BottomPhoto(
+              title: bp['title'] as String? ?? '',
+              price: bp['price'] as String?,
+              imagePath: bp['imagePath'] as String? ?? '',
+            )).toList();
+          }
+
           updatedPages.add(defaultPage.copyWith(
             category: MenuCategory(
               title: (pageData['category_title'] as String?) ?? defaultPage.category?.title ?? '',
               products: products,
             ),
+            cornerPhotoPath: pageData['corner_photo'] as String? ?? defaultPage.cornerPhotoPath,
+            largeBottomPhotoPath: pageData['large_bottom_photo'] as String? ?? defaultPage.largeBottomPhotoPath,
+            largeBottomPhotoTitle: pageData['large_bottom_title'] as String? ?? defaultPage.largeBottomPhotoTitle,
+            secondBottomPhotoPath: pageData['second_bottom_photo'] as String? ?? defaultPage.secondBottomPhotoPath,
+            secondBottomPhotoTitle: pageData['second_bottom_title'] as String? ?? defaultPage.secondBottomPhotoTitle,
+            firstAlternatingPhotoPath: pageData['first_alternating_photo'] as String? ?? defaultPage.firstAlternatingPhotoPath,
+            firstAlternatingPhotoTitle: pageData['first_alternating_title'] as String? ?? defaultPage.firstAlternatingPhotoTitle,
+            secondAlternatingPhotoPath: pageData['second_alternating_photo'] as String? ?? defaultPage.secondAlternatingPhotoPath,
+            secondAlternatingPhotoTitle: pageData['second_alternating_title'] as String? ?? defaultPage.secondAlternatingPhotoTitle,
+            bottomPhotos: bottomPhotos ?? defaultPage.bottomPhotos,
           ));
         } else {
           updatedPages.add(defaultPage);

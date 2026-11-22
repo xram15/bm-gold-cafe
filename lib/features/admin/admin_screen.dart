@@ -1058,9 +1058,15 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             child: ClipRRect(
               borderRadius: BorderRadius.circular(9),
               child: imagePath != null && imagePath.isNotEmpty
-                  ? (imagePath.startsWith('http')
-                      ? Image.network(imagePath, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image_rounded, color: Colors.white38))
-                      : Image.asset(imagePath, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image_rounded, color: Colors.white38)))
+                  ? (imagePath.startsWith('data:image')
+                      ? Image.memory(
+                          base64Decode(imagePath.substring(imagePath.indexOf(',') + 1)),
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => const Icon(Icons.broken_image_rounded, color: Colors.white38),
+                        )
+                      : (imagePath.startsWith('http')
+                          ? Image.network(imagePath, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image_rounded, color: Colors.white38))
+                          : Image.asset(imagePath, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image_rounded, color: Colors.white38))))
                   : const Icon(Icons.image_not_supported_rounded, color: Colors.white24),
             ),
           ),
