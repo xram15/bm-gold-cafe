@@ -129,9 +129,9 @@ class VerticalBookPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // En-tête : Titre de catégorie, marge à droite pour laisser place au grand médaillon lune
+                  // En-tête : Titre de catégorie, marge à droite pour laisser place au médaillon lune
                   Padding(
-                    padding: const EdgeInsets.only(right: 94, left: 4),
+                    padding: const EdgeInsets.only(right: 58, left: 4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -219,8 +219,8 @@ class VerticalBookPage extends StatelessWidget {
 
             // ── 4. Photo en haut à droite dans le coin "comme la lune" ────
             Positioned(
-              top: 10,
-              right: 10,
+              top: 8,
+              right: 8,
               child: _buildMoonCornerPhoto(
                 pageData: pageData,
                 goldBorder: goldBorder,
@@ -771,7 +771,7 @@ class VerticalBookPage extends StatelessWidget {
     );
   }
 
-  // ── Photo coin supérieur droit "comme la lune" ─────────────────────────────
+  // ── Photo coin supérieur droit "comme la lune" (compacte pour ne pas cacher les prix) ──
   Widget _buildMoonCornerPhoto({
     required BookPage? pageData,
     required Color goldBorder,
@@ -781,29 +781,29 @@ class VerticalBookPage extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Halo croissant de lune doré agrandi
+        // Halo croissant de lune doré compact
         CustomPaint(
-          size: const Size(96, 96),
+          size: const Size(56, 56),
           painter: MoonCrescentPainter(goldColor: goldBorder),
         ),
 
-        // Médaillon photo circulaire (82x82px) avec bordure dorée royale
+        // Médaillon photo circulaire compact (46x46px) ne débordant pas sur les prix
         Container(
-          width: 82,
-          height: 82,
+          width: 46,
+          height: 46,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: goldBorder, width: 2.0),
+            border: Border.all(color: goldBorder, width: 1.6),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.6),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
               BoxShadow(
-                color: goldBorder.withValues(alpha: 0.35),
-                blurRadius: 12,
-                spreadRadius: 1.2,
+                color: goldBorder.withValues(alpha: 0.30),
+                blurRadius: 8,
+                spreadRadius: 0.8,
               ),
             ],
           ),
