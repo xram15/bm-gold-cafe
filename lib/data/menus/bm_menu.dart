@@ -89,6 +89,7 @@ const Book bmMenu = Book(
     BookPage(
       style: PageStyle.singleLargeBottom,
       cornerPhotoPath: 'assets/restaurant/cafe.png',
+      backgroundImagePath: 'assets/jus-back.jpg',
       largeBottomPhotoPath: 'assets/restaurant/cat_boissons.png',
       category: MenuCategory(
         title: 'JUS FRAIS',
