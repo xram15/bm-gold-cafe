@@ -115,7 +115,7 @@ class _BookScreenState extends State<BookScreen> {
                     alignment: Alignment.center,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 26.0, vertical: 2.0),
                         child: VerticalBookFlipView(
                           key: _flipKey,
                           book: currentBook,
@@ -127,33 +127,39 @@ class _BookScreenState extends State<BookScreen> {
                         ),
                       ),
 
-                      // Flèche flottante retour (Page précédente) - Positionnée en bas pour ne pas cacher le contenu
+                      // Flèche retour (Page précédente) - Au milieu vertical, calée tout à gauche
                       if (_currentPage > 0)
                         Positioned(
-                          left: 8,
-                          bottom: 20,
-                          child: _FloatingNavBtn(
-                            icon: Icons.chevron_left_rounded,
-                            onTap: () {
-                              _flipKey.currentState?.flipBackward();
-                            },
-                            iconColor: darkColor,
-                            tooltip: 'Page précédente',
+                          left: 2,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(
+                            child: _FloatingNavBtn(
+                              icon: Icons.chevron_left_rounded,
+                              onTap: () {
+                                _flipKey.currentState?.flipBackward();
+                              },
+                              iconColor: darkColor,
+                              tooltip: 'Page précédente',
+                            ),
                           ),
                         ),
 
-                      // Flèche flottante avant (Page suivante) - Positionnée en bas pour ne JAMAIS cacher les prix
+                      // Flèche avant (Page suivante) - Au milieu vertical, calée tout à droite
                       if (_currentPage < totalPages - 1)
                         Positioned(
-                          right: 8,
-                          bottom: 20,
-                          child: _FloatingNavBtn(
-                            icon: Icons.chevron_right_rounded,
-                            onTap: () {
-                              _flipKey.currentState?.flipForward();
-                            },
-                            iconColor: darkColor,
-                            tooltip: 'Page suivante',
+                          right: 2,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(
+                            child: _FloatingNavBtn(
+                              icon: Icons.chevron_right_rounded,
+                              onTap: () {
+                                _flipKey.currentState?.flipForward();
+                              },
+                              iconColor: darkColor,
+                              tooltip: 'Page suivante',
+                            ),
                           ),
                         ),
                     ],
@@ -220,23 +226,23 @@ class _FloatingNavBtn extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(7),
+          padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.92),
+            color: Colors.white.withValues(alpha: 0.95),
             border: Border.all(
-              color: const Color(0xFFC59B4B).withValues(alpha: 0.6),
+              color: const Color(0xFFC59B4B).withValues(alpha: 0.7),
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Icon(icon, color: iconColor, size: 20),
+          child: Icon(icon, color: iconColor, size: 18),
         ),
       ),
     );

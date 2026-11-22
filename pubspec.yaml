@@ -68,6 +68,11 @@ flutter:
     - assets/restaurant/
     - assets/petit_dejeuner/
     - assets/video-back.mp4
+    - assets/thé-back.jpg
+    - assets/the-back.jpg
+    - assets/coctail-back.jpg
+    - assets/chicha-back.jpg
+    - assets/quasar-back.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

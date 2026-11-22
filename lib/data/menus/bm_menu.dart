@@ -37,15 +37,14 @@ const Book bmMenu = Book(
 
 
     // -------------------------------------------------------------------------
-    // PAGE 2 : Thé 
+    // PAGE 2 : THÉ & INFUSIONS
     // -------------------------------------------------------------------------
     BookPage(
-      style: PageStyle.singleLargeBottom,
+      style: PageStyle.sectionsWithBackground,
       cornerPhotoPath: 'assets/restaurant/cafe.png',
-      largeBottomPhotoPath: 'assets/restaurant/cat_boissons.png',
-      largeBottomPhotoTitle: "L'ÉTHIQUE DU THE",
+      backgroundImagePath: 'assets/the-back.jpg',
       category: MenuCategory(
-        title: 'Thé',
+        title: 'THÉ & INFUSIONS',
         products: <Product>[],
       ),
     ),
@@ -87,7 +86,7 @@ const Book bmMenu = Book(
     ),
 
     // -------------------------------------------------------------------------
-    // PAGE 4 : JUS 
+    // PAGE 4 : JUS FRAIS
     // -------------------------------------------------------------------------
     BookPage(
       style: PageStyle.singleLargeBottom,
@@ -101,20 +100,20 @@ const Book bmMenu = Book(
     ),
 
     // -------------------------------------------------------------------------
-    // PAGE 4 : COCTAILS & MOJITOS
+    // PAGE 5 : COCKTAILS & MOJITOS
     // -------------------------------------------------------------------------
     BookPage(
-      style: PageStyle.singleLargeBottom,
+      style: PageStyle.sectionsWithBackground,
       cornerPhotoPath: 'assets/restaurant/cafe.png',
-      largeBottomPhotoPath: 'assets/restaurant/cat_boissons.png',
-      largeBottomPhotoTitle: "Coctails",
+      backgroundImagePath: 'assets/coctail-back.jpg',
       category: MenuCategory(
         title: 'COCTAILS & MOJITOS',
         products: <Product>[],
       ),
     ),
+
     // -------------------------------------------------------------------------
-    // PAGE 5 : PASTA & RISOTTO
+    // PAGE 6 : PASTA & RISOTTO
     // -------------------------------------------------------------------------
     BookPage(
       style: PageStyle.singleLargeBottom,
@@ -128,15 +127,27 @@ const Book bmMenu = Book(
     ),
 
     // -------------------------------------------------------------------------
-    // PAGE 9 : CHICHA WOOKAH & ESPACE LOUNGE
+    // PAGE 7 : CHICHA NORMALE
     // -------------------------------------------------------------------------
     BookPage(
-      style: PageStyle.singleLargeBottom,
+      style: PageStyle.sectionsWithBackground,
       cornerPhotoPath: 'assets/restaurant/cat_shisha.jfif',
-      largeBottomPhotoPath: 'assets/restaurant/cat_shisha.jfif',
-      largeBottomPhotoTitle: 'EXPÉRIENCE CHICHA WOOKAH',
+      backgroundImagePath: 'assets/chicha-back.jpg',
       category: MenuCategory(
-        title: 'CHICHA & LOUNGE',
+        title: 'CHICHA NORMALE',
+        products: <Product>[],
+      ),
+    ),
+
+    // -------------------------------------------------------------------------
+    // PAGE 8 : CHICHA QUASAR & SPÉCIALE
+    // -------------------------------------------------------------------------
+    BookPage(
+      style: PageStyle.sectionsWithBackground,
+      cornerPhotoPath: 'assets/restaurant/cat_shisha.jfif',
+      backgroundImagePath: 'assets/quasar-back.jpg',
+      category: MenuCategory(
+        title: 'CHICHA QUASAR',
         products: <Product>[],
       ),
     ),
