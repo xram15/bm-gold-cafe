@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/models/book_model.dart';
@@ -67,6 +68,55 @@ class SupabaseService {
   }
 
   static const String _kLocalMenuStorageKey = 'bm_gold_saved_menu_v1';
+
+  Map<String, String> get _restHeaders => {
+        'apikey': supabaseAnonKey,
+        'Authorization': 'Bearer $supabaseAnonKey',
+        'Content-Type': 'application/json',
+      };
+
+  /// Statut d'une table via REST direct, SANS attendre l'init du SDK (démarrage rapide).
+  Future<Map<String, dynamic>?> fetchTableStatusFast(String tableId) async {
+    try {
+      final res = await http
+          .post(
+            Uri.parse('$supabaseUrl/rest/v1/rpc/get_cafe_table_status'),
+            headers: _restHeaders,
+            body: jsonEncode({'p_id': tableId}),
+          )
+          .timeout(const Duration(seconds: 6));
+      if (res.statusCode != 200) return null;
+      final rows = jsonDecode(res.body);
+      if (rows is! List || rows.isEmpty || rows.first is! Map) return null;
+      return Map<String, dynamic>.from(rows.first as Map);
+    } catch (e) {
+      debugPrint('[Supabase] Statut table (fast): $e');
+      return null;
+    }
+  }
+
+  /// Liste publique des tables (statut) pour choisir/scanner une autre table.
+  Future<List<Map<String, dynamic>>> fetchTablesStatusFast() async {
+    try {
+      final res = await http
+          .post(
+            Uri.parse('$supabaseUrl/rest/v1/rpc/list_cafe_tables_status'),
+            headers: _restHeaders,
+            body: '{}',
+          )
+          .timeout(const Duration(seconds: 6));
+      if (res.statusCode != 200) return [];
+      final rows = jsonDecode(res.body);
+      if (rows is! List) return [];
+      return rows
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .toList();
+    } catch (e) {
+      debugPrint('[Supabase] Liste tables (fast): $e');
+      return [];
+    }
+  }
 
   /// Initialisation Supabase
   Future<void> init() async {
@@ -561,7 +611,15 @@ class SupabaseService {
     if (!_isConfigured || _client == null) return;
 
     try {
-      // 1. Récupérer en parallèle tous les produits et la config des photos
+      // Phase 1 : texte des produits SANS les images base64 → affichage immédiat.
+      final textRows = await _client!
+          .from('products')
+          .select('id, name, price, description, category_name')
+          .neq('category_name', '__PAGE_PHOTOS__')
+          .order('id', ascending: true);
+      _mergeMenu(textRows as List<dynamic>, null);
+
+      // Phase 2 : images des produits + photos de page (payload lourd) en arrière-plan.
       final results = await Future.wait([
         _client!
             .from('products')
@@ -573,73 +631,80 @@ class SupabaseService {
             .select('name, description')
             .eq('category_name', '__PAGE_PHOTOS__'),
       ]);
-
-      final List<dynamic> productsData = results[0] as List<dynamic>;
-      final List<dynamic> photosRows = results[1] as List<dynamic>;
-
-      // A. Organiser les produits
-      final Map<String, List<Product>> groupedProducts = {};
-      for (final item in productsData) {
-        final cat = (item['category_name'] as String?)?.trim().toUpperCase() ?? 'AUTRE';
-        groupedProducts.putIfAbsent(cat, () => []).add(Product.fromJson(item as Map<String, dynamic>));
-      }
-
-      // B. Organiser les photos
-      final Map<int, Map<String, dynamic>> photosByPage = {};
-      for (final row in photosRows) {
-        final name = row['name'] as String? ?? '';
-        final desc = row['description'] as String? ?? '';
-        if (!name.startsWith('page_') || desc.isEmpty) continue;
-        final pageIdx = int.tryParse(name.replaceFirst('page_', ''));
-        if (pageIdx != null) {
-          try {
-            photosByPage[pageIdx] = jsonDecode(desc) as Map<String, dynamic>;
-          } catch (_) {}
-        }
-      }
-
-      // C. Créer l'état complet du livre en une passe atomique
-      final List<BookPage> updatedPages = [];
-      for (int i = 0; i < currentBook.pages.length; i++) {
-        final page = currentBook.pages[i];
-        final String catTitle = (page.category?.title ?? '').trim().toUpperCase();
-        final dynamicProducts = groupedProducts[catTitle];
-        final photoData = photosByPage[i];
-
-        BookPage updatedPage = page;
-
-        // Mise à jour des produits si disponibles
-        if (dynamicProducts != null && dynamicProducts.isNotEmpty) {
-          updatedPage = updatedPage.copyWith(
-            category: MenuCategory(title: page.category?.title ?? '', products: dynamicProducts),
-          );
-        }
-
-        // Mise à jour des photos si disponibles
-        if (photoData != null) {
-          updatedPage = updatedPage.copyWith(
-            cornerPhotoPath: photoData['corner_photo'] as String? ?? updatedPage.cornerPhotoPath,
-            largeBottomPhotoPath: photoData['large_bottom_photo'] as String? ?? updatedPage.largeBottomPhotoPath,
-            largeBottomPhotoTitle: photoData['large_bottom_title'] as String? ?? updatedPage.largeBottomPhotoTitle,
-            secondBottomPhotoPath: photoData['second_bottom_photo'] as String? ?? updatedPage.secondBottomPhotoPath,
-            secondBottomPhotoTitle: photoData['second_bottom_title'] as String? ?? updatedPage.secondBottomPhotoTitle,
-            firstAlternatingPhotoPath: photoData['first_alternating_photo'] as String? ?? updatedPage.firstAlternatingPhotoPath,
-            firstAlternatingPhotoTitle: photoData['first_alternating_title'] as String? ?? updatedPage.firstAlternatingPhotoTitle,
-            secondAlternatingPhotoPath: photoData['second_alternating_photo'] as String? ?? updatedPage.secondAlternatingPhotoPath,
-            secondAlternatingPhotoTitle: photoData['second_alternating_title'] as String? ?? updatedPage.secondAlternatingPhotoTitle,
-          );
-        }
-
-        updatedPages.add(updatedPage);
-      }
-
-      // D. Application UNIQUE à l'écran
-      _updateBook(updatedPages);
+      _mergeMenu(results[0] as List<dynamic>, results[1] as List<dynamic>);
       await saveMenuToLocalStorage();
       debugPrint('[Supabase] Synchronisation globale complète (produits & photos) effectuée sans clignotement.');
     } catch (e) {
       debugPrint('[Supabase] Erreur fetchAllMenuAndPhotos: $e');
     }
+  }
+
+  // Fusionne produits (+ photos) dans le livre en une passe atomique.
+  // Conserve les images déjà en cache quand la phase texte ne les fournit pas.
+  void _mergeMenu(List<dynamic> productsData, List<dynamic>? photosRows) {
+    final Map<String, String?> existingImages = {};
+    for (final page in currentBook.pages) {
+      for (final prod in page.category?.products ?? <Product>[]) {
+        existingImages[prod.name] = prod.imagePath;
+      }
+    }
+
+    final Map<String, List<Product>> groupedProducts = {};
+    for (final item in productsData) {
+      final cat = (item['category_name'] as String?)?.trim().toUpperCase() ?? 'AUTRE';
+      var product = Product.fromJson(item as Map<String, dynamic>);
+      if (product.imagePath == null && existingImages[product.name] != null) {
+        product = product.copyWith(imagePath: existingImages[product.name]);
+      }
+      groupedProducts.putIfAbsent(cat, () => []).add(product);
+    }
+
+    final Map<int, Map<String, dynamic>> photosByPage = {};
+    for (final row in photosRows ?? const <dynamic>[]) {
+      final name = row['name'] as String? ?? '';
+      final desc = row['description'] as String? ?? '';
+      if (!name.startsWith('page_') || desc.isEmpty) continue;
+      final pageIdx = int.tryParse(name.replaceFirst('page_', ''));
+      if (pageIdx != null) {
+        try {
+          photosByPage[pageIdx] = jsonDecode(desc) as Map<String, dynamic>;
+        } catch (_) {}
+      }
+    }
+
+    final List<BookPage> updatedPages = [];
+    for (int i = 0; i < currentBook.pages.length; i++) {
+      final page = currentBook.pages[i];
+      final String catTitle = (page.category?.title ?? '').trim().toUpperCase();
+      final dynamicProducts = groupedProducts[catTitle];
+      final photoData = photosByPage[i];
+
+      BookPage updatedPage = page;
+
+      if (dynamicProducts != null && dynamicProducts.isNotEmpty) {
+        updatedPage = updatedPage.copyWith(
+          category: MenuCategory(title: page.category?.title ?? '', products: dynamicProducts),
+        );
+      }
+
+      if (photoData != null) {
+        updatedPage = updatedPage.copyWith(
+          cornerPhotoPath: photoData['corner_photo'] as String? ?? updatedPage.cornerPhotoPath,
+          largeBottomPhotoPath: photoData['large_bottom_photo'] as String? ?? updatedPage.largeBottomPhotoPath,
+          largeBottomPhotoTitle: photoData['large_bottom_title'] as String? ?? updatedPage.largeBottomPhotoTitle,
+          secondBottomPhotoPath: photoData['second_bottom_photo'] as String? ?? updatedPage.secondBottomPhotoPath,
+          secondBottomPhotoTitle: photoData['second_bottom_title'] as String? ?? updatedPage.secondBottomPhotoTitle,
+          firstAlternatingPhotoPath: photoData['first_alternating_photo'] as String? ?? updatedPage.firstAlternatingPhotoPath,
+          firstAlternatingPhotoTitle: photoData['first_alternating_title'] as String? ?? updatedPage.firstAlternatingPhotoTitle,
+          secondAlternatingPhotoPath: photoData['second_alternating_photo'] as String? ?? updatedPage.secondAlternatingPhotoPath,
+          secondAlternatingPhotoTitle: photoData['second_alternating_title'] as String? ?? updatedPage.secondAlternatingPhotoTitle,
+        );
+      }
+
+      updatedPages.add(updatedPage);
+    }
+
+    _updateBook(updatedPages);
   }
 
   Future<void> fetchMenu() => fetchAllMenuAndPhotos();

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:universal_html/html.dart' as html;
 import 'package:video_player/video_player.dart';
 import '../../core/app_colors.dart';
 import '../../data/models/book_model.dart';
 import '../../services/supabase_service.dart';
 import '../admin/admin_screen.dart';
 import '../book/book_screen.dart';
+import 'table_scan.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,13 +26,12 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkScannedTable());
   }
 
-  // Scan QR d'une table : ?table=<uuid> → alerter si la table est réservée
+  // Scan QR d'une table : ?table=<uuid> → alerter si la table est réservée.
+  // Appel REST direct en parallèle du démarrage : n'attend pas l'init du SDK.
   Future<void> _checkScannedTable() async {
     final tableId = Uri.base.queryParameters['table'];
     if (tableId == null || tableId.isEmpty) return;
-    // Attendre que Supabase soit initialisé (le 1er rendu arrive avant la fin de l'init)
-    await SupabaseService.instance.ready.timeout(const Duration(seconds: 10), onTimeout: () {});
-    final status = await SupabaseService.instance.fetchTableStatus(tableId);
+    final status = await SupabaseService.instance.fetchTableStatusFast(tableId);
     if (!mounted || status == null || status['booked'] != true) return;
     _showReservedDialog(status);
   }
@@ -106,7 +107,101 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFC59B4B)),
+                  foregroundColor: Color(0xFFE5C158),
+                ),
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  _scanOtherTable();
+                },
+                icon: const Icon(Icons.qr_code_scanner, size: 18),
+                label: const Text(
+                  'Scanner une autre table',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Caméra QR (web) ; si indisponible/annulé → choix parmi les tables libres.
+  Future<void> _scanOtherTable() async {
+    final id = await scanTableQr();
+    if (id != null && id.isNotEmpty) {
+      _openTable(id);
+      return;
+    }
+    if (!mounted) return;
+    _showTableChooser();
+  }
+
+  void _openTable(String id) {
+    final uri = Uri.base.replace(queryParameters: {
+      ...Uri.base.queryParameters,
+      'table': id,
+    });
+    html.window.location.assign(uri.toString());
+  }
+
+  Future<void> _showTableChooser() async {
+    final tables = await SupabaseService.instance.fetchTablesStatusFast();
+    if (!mounted) return;
+    if (tables.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Aucune table disponible pour le moment.')),
+      );
+      return;
+    }
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF17171A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: Color(0xFFC59B4B), width: 1.2),
+        ),
+        title: const Text(
+          'Choisir une autre table',
+          style: TextStyle(color: Color(0xFFE5C158), fontSize: 16, fontWeight: FontWeight.w800),
+        ),
+        content: SizedBox(
+          width: 300,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final t in tables)
+                ListTile(
+                  dense: true,
+                  enabled: t['booked'] != true,
+                  leading: Icon(
+                    t['booked'] == true ? Icons.event_busy : Icons.event_available,
+                    color: t['booked'] == true ? Color(0xFF8B8F9A) : Color(0xFFD4AF37),
+                  ),
+                  title: Text(
+                    '${t['name']}',
+                    style: TextStyle(
+                      color: t['booked'] == true ? Color(0xFF8B8F9A) : Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    t['booked'] == true ? 'Réservée' : 'Libre · ${t['capacity'] ?? '?'} pers.',
+                    style: const TextStyle(color: Color(0xFF9A9DA5), fontSize: 11),
+                  ),
+                  onTap: t['booked'] == true ? null : () {
+                    Navigator.of(ctx).pop();
+                    _openTable('${t['id']}');
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );

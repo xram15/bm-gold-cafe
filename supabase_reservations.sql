@@ -38,3 +38,19 @@ $$;
 
 revoke all on function public.get_cafe_table_status(uuid) from public;
 grant execute on function public.get_cafe_table_status(uuid) to anon, authenticated;
+
+-- Liste publique des tables (nom + statut) pour « scanner/choisir une autre table ».
+create or replace function public.list_cafe_tables_status()
+returns table (id uuid, name text, booked boolean, capacity integer)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select t.id, t.name, t.booked, t.capacity
+  from public.cafe_tables t
+  order by t.created_at;
+$$;
+
+revoke all on function public.list_cafe_tables_status() from public;
+grant execute on function public.list_cafe_tables_status() to anon, authenticated;

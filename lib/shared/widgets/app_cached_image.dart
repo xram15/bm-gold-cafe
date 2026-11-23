@@ -55,6 +55,8 @@ class AppCachedImage extends StatelessWidget {
           width: width,
           height: height,
           fit: fit,
+          cacheWidth: width == null ? null : (width! * 2).round(),
+          cacheHeight: height == null ? null : (height! * 2).round(),
           gaplessPlayback: true,
           errorBuilder: (context, error, stackTrace) => fallback,
         );
@@ -68,6 +70,8 @@ class AppCachedImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
+        cacheWidth: width == null ? null : (width! * 2).round(),
+        cacheHeight: height == null ? null : (height! * 2).round(),
         gaplessPlayback: true,
         errorBuilder: (context, error, stackTrace) => fallback,
         loadingBuilder: (context, child, loadingProgress) {
@@ -94,6 +98,8 @@ class AppCachedImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
+      cacheWidth: width == null ? null : (width! * 2).round(),
+      cacheHeight: height == null ? null : (height! * 2).round(),
       gaplessPlayback: true,
       errorBuilder: (context, error, stackTrace) => fallback,
     );
