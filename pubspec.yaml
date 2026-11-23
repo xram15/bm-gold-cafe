@@ -46,6 +46,7 @@ dependencies:
   qr_flutter: ^4.1.0
   web: ^1.1.1
   http: ^1.2.2
+  image: ^4.13.1
 
 dev_dependencies:
   flutter_test:

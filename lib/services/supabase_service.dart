@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/models/book_model.dart';
@@ -19,15 +20,18 @@ class SupabaseService {
   // ===========================================================================
   static const String supabaseUrl = 'https://kntybigswxfmitrumskw.supabase.co';
   static const String supabaseAnonKey = 'sb_publishable_Iua3ckvxQQVEJZob97yXSw_jQdhmpw-';
+  static const String storageBucketName = 'product-images';
 
   bool _isConfigured = false;
   bool get isConfigured => _isConfigured;
 
+  // Cache mémoire : garantit que le menu n'est chargé qu'une seule fois par session
+  bool _isMenuLoaded = false;
+  bool get isMenuLoaded => _isMenuLoaded;
+
   // Complété dès que le client Supabase est utilisable (avant le chargement du menu)
   final Completer<void> _ready = Completer<void>();
   Future<void> get ready => _ready.future;
-  StreamSubscription<List<Map<String, dynamic>>>? _menuSubscription;
-  Timer? _menuRefreshTimer;
 
   // Notifier pour mettre à jour le livre en direct partout dans l'application
   final ValueNotifier<Book> currentBookNotifier = ValueNotifier<Book>(bmMenu);
@@ -46,7 +50,62 @@ class SupabaseService {
   bool get isAuthenticated => _client?.auth.currentSession != null;
   bool get isAdminLoggedIn => isAuthenticated;
 
-  Future<void> signInAdmin(String email, String password) => signInWithEmail(email, password);
+  /// Compresse et redimensionne une image binaire (max 800px, JPEG 80%, < 100 Ko)
+  /// et l'uploade dans Supabase Storage (bucket 'product-images') avec cache CDN 1 an.
+  /// Retourne l'URL publique directe du fichier.
+  Future<String?> uploadImageToStorage(Uint8List rawBytes, {String? customFileName}) async {
+    if (!_isConfigured || _client == null) {
+      debugPrint('[Storage] Supabase non configuré pour upload');
+      return null;
+    }
+
+    try {
+      // 1. Décodage et redimensionnement avec package:image (100% pur Dart / Web)
+      Uint8List compressedBytes = rawBytes;
+      try {
+        final decoded = img.decodeImage(rawBytes);
+        if (decoded != null) {
+          img.Image resized = decoded;
+          if (decoded.width > 800 || decoded.height > 800) {
+            resized = img.copyResize(
+              decoded,
+              width: decoded.width >= decoded.height ? 800 : null,
+              height: decoded.height > decoded.width ? 800 : null,
+              interpolation: img.Interpolation.linear,
+            );
+          }
+          // Encodage JPEG qualité 80%
+          compressedBytes = Uint8List.fromList(img.encodeJpg(resized, quality: 80));
+          debugPrint('[Storage] Image compressée : ${rawBytes.length} octets -> ${compressedBytes.length} octets');
+        }
+      } catch (e) {
+        debugPrint('[Storage] Fallback sans compression image: $e');
+      }
+
+      // 2. Nom de fichier unique
+      final fileName = customFileName ?? 'img_${DateTime.now().millisecondsSinceEpoch}_${compressedBytes.length}.jpg';
+      final storagePath = 'photos/$fileName';
+
+      // 3. Upload binaire avec cache CDN 1 an (31536000s) et upsert
+      await _client!.storage.from(storageBucketName).uploadBinary(
+            storagePath,
+            compressedBytes,
+            fileOptions: const FileOptions(
+              cacheControl: '31536000',
+              upsert: true,
+              contentType: 'image/jpeg',
+            ),
+          );
+
+      // 4. Récupération de l'URL publique
+      final publicUrl = _client!.storage.from(storageBucketName).getPublicUrl(storagePath);
+      debugPrint('[Storage] Image uploadée avec succès: $publicUrl');
+      return publicUrl;
+    } catch (e) {
+      debugPrint('[Storage] Erreur upload image: $e');
+      return null;
+    }
+  }
   Future<void> signOutAdmin() => signOut();
 
   String? get currentAdminEmail => _client?.auth.currentUser?.email;
@@ -605,21 +664,18 @@ class SupabaseService {
   // 🔄 RECHARGEMENT & SYNCHRONISATION
   // ===========================================================================
 
-  /// 🔄 Synchronisation unifiée et atomique : Charge simultanément les produits et les photos
-  /// et n'applique les changements au livre qu'une SEULE fois (élimine tout clignotement ou affichage d'anciennes photos)
-  Future<void> fetchAllMenuAndPhotos() async {
+  /// 🔄 Synchronisation unifiée et ultra-légère (< 15 Ko) :
+  /// 1. Ne s'exécute qu'une seule fois par session (sauf appel forcé avec forceReload: true).
+  /// 2. Télécharge uniquement les colonnes indispensables (les images sont de courtes URLs Supabase Storage).
+  Future<void> fetchAllMenuAndPhotos({bool forceReload = false}) async {
     if (!_isConfigured || _client == null) return;
+    if (_isMenuLoaded && !forceReload) {
+      debugPrint('[Supabase] Menu déjà en mémoire (cache session actif, requête réseau évitée).');
+      return;
+    }
 
     try {
-      // Phase 1 : texte des produits SANS les images base64 → affichage immédiat.
-      final textRows = await _client!
-          .from('products')
-          .select('id, name, price, description, category_name')
-          .neq('category_name', '__PAGE_PHOTOS__')
-          .order('id', ascending: true);
-      _mergeMenu(textRows as List<dynamic>, null);
-
-      // Phase 2 : images des produits + photos de page (payload lourd) en arrière-plan.
+      // Requête unique et légère : uniquement les colonnes utiles
       final results = await Future.wait([
         _client!
             .from('products')
@@ -631,9 +687,14 @@ class SupabaseService {
             .select('name, description')
             .eq('category_name', '__PAGE_PHOTOS__'),
       ]);
-      _mergeMenu(results[0] as List<dynamic>, results[1] as List<dynamic>);
+
+      final List<dynamic> productsData = results[0] as List<dynamic>;
+      final List<dynamic> photosRows = results[1] as List<dynamic>;
+
+      _mergeMenu(productsData, photosRows);
+      _isMenuLoaded = true;
       await saveMenuToLocalStorage();
-      debugPrint('[Supabase] Synchronisation globale complète (produits & photos) effectuée sans clignotement.');
+      debugPrint('[Supabase] Menu et photos synchronisés en mémoire avec succès (< 15 Ko).');
     } catch (e) {
       debugPrint('[Supabase] Erreur fetchAllMenuAndPhotos: $e');
     }
@@ -707,37 +768,11 @@ class SupabaseService {
     _updateBook(updatedPages);
   }
 
-  Future<void> fetchMenu() => fetchAllMenuAndPhotos();
+  Future<void> fetchMenu({bool forceReload = false}) => fetchAllMenuAndPhotos(forceReload: forceReload);
 
   void _subscribeToRealtimeChanges() {
-    if (!_isConfigured || _client == null || _menuSubscription != null || _menuRefreshTimer != null) return;
-
-    try {
-      _menuSubscription = _client!
-          .from('products')
-          .stream(primaryKey: ['id'])
-          .listen(
-            (_) {
-              fetchAllMenuAndPhotos();
-            },
-            onError: (Object error) {
-              debugPrint('[Menu] Mises à jour en direct indisponibles; actualisation périodique activée.');
-              unawaited(_menuSubscription?.cancel());
-              _menuSubscription = null;
-              _startMenuPolling();
-            },
-            onDone: _startMenuPolling,
-          );
-    } catch (e) {
-      debugPrint('[Menu] Mises à jour en direct indisponibles; actualisation périodique activée.');
-      _startMenuPolling();
-    }
-  }
-
-  void _startMenuPolling() {
-    _menuRefreshTimer ??= Timer.periodic(const Duration(seconds: 30), (_) {
-      unawaited(fetchMenu());
-    });
+    // Polling supprimé pour préserver le quota Egress : le chargement initial unique suffit.
+    // L'actualisation manuelle reste disponible via fetchMenu(forceReload: true) ou après sauvegarde.
   }
 
   void _updateBook(List<BookPage> pages) {

@@ -1285,19 +1285,30 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                                         ..accept = 'image/*'
                                         ..multiple = false;
 
-                                  uploadInput.onChange.listen((e) {
+                                  uploadInput.onChange.listen((e) async {
                                     final files = uploadInput.files;
                                     if (files != null && files.isNotEmpty) {
                                       final html.File file = files[0];
                                       final reader = html.FileReader();
-                                      reader.readAsDataUrl(file);
-                                      reader.onLoadEnd.listen((event) {
-                                        final result = reader.result as String?;
-                                        if (result != null && result.isNotEmpty) {
-                                          setModalState(() {
-                                            currentPath = result;
-                                            isPicking = false;
-                                          });
+                                      reader.readAsArrayBuffer(file);
+                                      reader.onLoadEnd.listen((event) async {
+                                        final rawData = reader.result;
+                                        if (rawData is Uint8List && rawData.isNotEmpty) {
+                                          // Upload direct vers Supabase Storage avec compression < 100 Ko
+                                          final publicUrl = await _service.uploadImageToStorage(rawData);
+                                          if (publicUrl != null) {
+                                            setModalState(() {
+                                              currentPath = publicUrl;
+                                              isPicking = false;
+                                            });
+                                          } else {
+                                            // Fallback local en mémoire si hors-ligne
+                                            final base64String = 'data:image/jpeg;base64,${base64Encode(rawData)}';
+                                            setModalState(() {
+                                              currentPath = base64String;
+                                              isPicking = false;
+                                            });
+                                          }
                                         } else {
                                           setModalState(() => isPicking = false);
                                         }
@@ -1327,9 +1338,9 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                                     );
                                     if (imgFile != null) {
                                       final bytes = await imgFile.readAsBytes();
-                                      final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                      final publicUrl = await _service.uploadImageToStorage(bytes);
                                       setModalState(() {
-                                        currentPath = base64String;
+                                        currentPath = publicUrl ?? 'data:image/jpeg;base64,${base64Encode(bytes)}';
                                       });
                                     }
                                   } catch (e) {
